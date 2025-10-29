@@ -58,8 +58,6 @@
         .focus\:border-brand-blue-dark:focus {
             border-color: #1E3A8A;
         }
-
-        /* La sección de estilos PDF .pdf-report-container ya no es necesaria */
     </style>
     
     <!-- Carga de íconos Lucide para React -->
@@ -95,9 +93,13 @@
                     <!-- Technician Name Dropdown -->
                     <div>
                         <label for="technicianName" class="block text-sm font-medium text-gray-700">Technician Name</label>
+                        <!-- CAMBIO: Opciones de técnico añadidas directamente (hardcoded) para fiabilidad -->
                         <select id="technicianName" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark">
-                            <option value="" disabled selected>Select Technician</option>
-                            <!-- Options populated by JS -->
+                            <option value="" disabled>Select Technician</option>
+                            <option value="Ramon">Ramon</option>
+                            <option value="Ryan">Ryan</option>
+                            <option value="Isaac">Isaac</option>
+                            <option value="Daniel">Daniel</option>
                         </select>
                     </div>
 
@@ -150,7 +152,13 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <input type="text" id="city" required placeholder="City" class="block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark">
                             <input type="text" id="state" required placeholder="State / Province" class="block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark">
-                            <input type="text" id="zipCode" required placeholder="Zip Code" class="block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark">
+                            <!-- CAMBIO: Validación de 5 dígitos numéricos para Zip Code -->
+                            <input type="text" id="zipCode" required placeholder="Zip Code" 
+                                   class="block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark"
+                                   maxlength="5" 
+                                   pattern="[0-9]{5}" 
+                                   inputmode="numeric"
+                                   title="Zip code must be 5 digits.">
                         </div>
                     </div>
                 </div>
@@ -197,6 +205,21 @@
                 <p class="text-center text-gray-500" id="loadingMessage">Loading reports...</p>
                 <!-- Reports will be inserted here -->
             </div>
+            
+            <!-- NUEVO: Sección para recuperar reportes antiguos -->
+            <div class="mt-6 pt-4 border-t border-gray-200">
+                <label for="retrieveIdInput" class="block text-sm font-medium text-gray-700">Retrieve Old Report by Number</label>
+                <div class="mt-1 flex space-x-2">
+                    <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
+                        SERVICE-
+                    </span>
+                    <input type="number" id="retrieveIdInput" placeholder="000001" class="flex-1 block w-full rounded-none border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark" inputmode="numeric">
+                    <button type="button" id="retrieveButton" class="px-4 py-2 bg-brand-blue-dark text-white font-semibold rounded-r-lg shadow-md hover:bg-brand-blue-dark-hover transition duration-150">
+                        Retrieve
+                    </button>
+                </div>
+            </div>
+
             <p class="mt-4 text-xs text-center text-gray-400">Your User ID (for sharing): <span id="currentUserId" class="font-mono text-gray-600 break-all">Loading...</span></p>
         </div>
 
@@ -204,20 +227,22 @@
 
     <!-- Firebase SDKs -->
     <script type="module">
-        <!-- CAMBIO: Versiones actualizadas a 12.4.0 -->
+        // CAMBIO: Versiones actualizadas a 12.4.0 (Corregido de HTML a JS comment)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, limit, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+        // CAMBIO: Imports añadidos para transacciones (runTransaction, getDoc, where)
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, limit, serverTimestamp, setLogLevel, runTransaction, getDoc, where } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
         
         // --- GLOBAL CONSTANTS ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'flexowash-service-reports';
         
-        // CAMBIO: Configuración de Firebase insertada (con espacios corregidos)
+        // CAMBIO: Configuración de Firebase reescrita manually para eliminar caracteres ocultos.
+        // CAMBIO 2: Corregido 'storageBucket' de .firebasestorage.app a .appspot.com
         const firebaseConfig = {
             apiKey: "AIzaSyDkYxAPCDKgt4QcZ44Nz72ZWYBzSMtyJCU",
             authDomain: "fw-reports.firebaseapp.com",
             projectId: "fw-reports",
-            storageBucket: "fw-reports.firebasestorage.app",
+            storageBucket: "fw-reports.appspot.com", // CORRECCIÓN AQUÍ
             messagingSenderId: "161658306989",
             appId: "1:161658306989:web:e38a7964295b1bf6396124"
         };
@@ -253,9 +278,15 @@
         const stateInput = document.getElementById('state');
         const zipCodeInput = document.getElementById('zipCode');
         
+        // NUEVO: Referencias para Retrieve
+        const retrieveIdInput = document.getElementById('retrieveIdInput');
+        const retrieveButton = document.getElementById('retrieveButton');
+        
         let db;
         let auth;
         let userId = 'loading';
+        // NUEVO: Variable global para manejar la anulación de suscripción del listener
+        let currentReportListener = null; 
         
         // --- UTILITIES ---
 
@@ -276,14 +307,12 @@
             }, 4000);
         }
 
-        /**
-         * Generates a simple unique report ID (simulating UUID).
-         * CAMBIO: El prefijo es 'SERVICE-'
-         * @returns {string} Unique ID.
-         */
+        // CAMBIO: generateReportId() ya no se usa, el ID se genera en la transacción
+        /*
         function generateReportId() {
             return 'SERVICE-' + Math.random().toString(36).substring(2, 9).toUpperCase();
         }
+        */
 
         /**
          * Formats a Date object to YYYY-MM-DD format (required by input[type=date]).
@@ -324,22 +353,6 @@
                 year: 'numeric', month: 'long', day: 'numeric'
             };
             return date.toLocaleDateString('en-US', options);
-        }
-
-        /**
-         * Populates the technician dropdown with names from the TECHNICIANS array.
-         */
-        function populateTechnicianDropdown() {
-            TECHNICIANS.forEach(name => {
-                const option = document.createElement('option');
-                option.value = name;
-                option.textContent = name;
-                technicianNameSelect.appendChild(option);
-            });
-            // Ensure the first option is selected if it's not the disabled one
-            if (technicianNameSelect.options.length > 1) {
-                technicianNameSelect.value = TECHNICIANS[0]; 
-            }
         }
 
         /**
@@ -408,7 +421,8 @@
 
             // 2. Recolectar datos
             const reportData = {
-                reportId: reportIdInput.value,
+                // CAMBIO: Si el reportId está vacío (nuevo reporte), mostrar "Pending" en el PDF
+                reportId: reportIdInput.value || 'SERVICE-PENDING', 
                 clientName: document.getElementById('clientName').value,
                 serviceDate: document.getElementById('serviceDate').value,
                 issueDescription: document.getElementById('issueDescription').value,
@@ -658,14 +672,24 @@
                 currentUserIdSpan.textContent = userId;
 
                 // Initialize report listener
-                setupReportListener();
+                // CAMBIO: Mover la llamada inicial del listener aquí.
+                // Se llama *después* de que db, auth, y userId estén definidos.
+                setupReportListener(technicianNameSelect.value || TECHNICIANS[0]); 
                 
                 console.log("Firebase initialized and user authenticated:", userId);
 
             } catch (error) {
                 console.error("Error in initFirebase:", error);
-                showMessage(`Initialization error: ${error.message}`, 'error');
-                document.getElementById('loadingMessage').textContent = `Error: ${error.message}`;
+                
+                // CAMBIO: Detectar este error específico y dar una mejor instrucción.
+                if (error.code === 'auth/configuration-not-found') {
+                    const friendlyError = "Error: Authentication (Sign-in) is not enabled in your Firebase project.";
+                    showMessage(friendlyError, 'error');
+                    document.getElementById('loadingMessage').textContent = friendlyError;
+                } else {
+                    showMessage(`Initialization error: ${error.message}`, 'error');
+                    document.getElementById('loadingMessage').textContent = `Error: ${error.message}`;
+                }
             }
         }
         
@@ -673,7 +697,16 @@
          * Prepares the form for a new report, clearing fields and setting default values.
          */
         function newReport() {
-            form.reset();
+            // CAMBIO: Resetear campos manualmente en lugar de usar form.reset()
+            document.getElementById('clientName').value = '';
+            document.getElementById('address').value = '';
+            document.getElementById('city').value = '';
+            document.getElementById('state').value = '';
+            document.getElementById('zipCode').value = '';
+            document.getElementById('issueDescription').value = '';
+            document.getElementById('workPerformed').value = '';
+            document.getElementById('status').value = 'Completed'; // Default status
+            
             const now = new Date();
             // Set service date to today's date (format YYYY-MM-DD)
             serviceDateInput.value = formatDateLocal(now);
@@ -682,15 +715,13 @@
             durationDaysInput.value = 0;
             durationHoursInput.value = 8;
             
-            // Default select to the first technician name 
-            if (technicianNameSelect.options.length > 1) {
-                technicianNameSelect.value = TECHNICIANS[0]; 
-            }
-            
-            // NUEVO: Set default service type
+            // Establecer valores por defecto para los <select>
+            // CAMBIO: Usar .value ahora que los técnicos están en el HTML.
+            technicianNameSelect.value = 'Ramon';
             serviceTypeSelect.value = 'Paid service';
 
-            reportIdInput.value = generateReportId();
+            // CAMBIO: reportId se deja vacío. El ID se asignará al GUARDAR.
+            reportIdInput.value = ''; 
             
             // Set button to 'Save Report' state
             saveButtonText.textContent = 'Save Report';
@@ -698,7 +729,11 @@
             
             // Re-render Lucide icons
             lucide.createIcons();
-            showMessage("New report started. Let's get to work!", 'success');
+            showMessage("New report started. Fill in details and save.", 'success');
+            
+            // CAMBIO: Ya no se llama a setupReportListener aquí,
+            // se llamará cuando initFirebase termine.
+            // setupReportListener('Ramon');
         }
 
         /**
@@ -712,9 +747,12 @@
                 return;
             }
             
-            // Gather all data
+            // CAMBIO: Lógica movida a la transacción si es un REPORTE NUEVO
+            const currentReportId = reportIdInput.value;
+            const isNewReport = currentReportId === ''; // Un reporte nuevo ya no tiene ID aleatorio
+
             const reportData = {
-                reportId: reportIdInput.value,
+                // reportId: se asignará en la transacción o en la actualización
                 clientName: document.getElementById('clientName').value,
                 serviceDate: document.getElementById('serviceDate').value,
                 issueDescription: document.getElementById('issueDescription').value,
@@ -722,7 +760,7 @@
                 status: document.getElementById('status').value,
                 
                 technicianName: technicianNameSelect.value,
-                serviceType: serviceTypeSelect.value, // NUEVO
+                serviceType: serviceTypeSelect.value, 
                 address: addressInput.value,
                 city: cityInput.value,
                 state: stateInput.value,
@@ -732,35 +770,91 @@
                 timestamp: serverTimestamp() 
             };
 
-            // Build the private collection path
-            // CAMBIO: Se elimina appId (ya no está definido) y se usa un path más simple.
-            const reportRef = doc(db, `users/${userId}/service_reports`, reportData.reportId);
+            if (isNewReport) {
+                // --- Lógica de transacción para NUEVOS reportes ---
+                try {
+                    const newReportId = await runTransaction(db, async (transaction) => {
+                        // 1. Definir la referencia al contador
+                        // CAMBIO: El path debe ser seguro para las reglas
+                        const counterRef = doc(db, "metadata/reportCounter"); 
+                        const counterDoc = await transaction.get(counterRef);
 
-            try {
-                await setDoc(reportRef, reportData);
-                showMessage('Report saved/updated successfully!', 'success');
-                // After saving, if it was a new report, clear the form for the next one.
-                // CAMBIO: Verificar el prefijo 'SERVICE-'
-                if (reportData.reportId.startsWith('SERVICE-')) {
-                    newReport();
+                        let newCount = 1; // Default si no existe
+                        if (counterDoc.exists()) {
+                            newCount = counterDoc.data().currentCount + 1;
+                        }
+
+                        // 2. Formatear el ID (ej: 1 -> SERVICE-000001)
+                        const formattedId = "SERVICE-" + String(newCount).padStart(6, '0');
+                        
+                        // 3. Actualizar el contador en la transacción
+                        transaction.set(counterRef, { currentCount: newCount });
+
+                        // 4. Crear el nuevo reporte con el ID secuencial
+                        // CAMBIO: Path actualizado a la colección pública 'service_reports'
+                        const reportRef = doc(db, `service_reports`, formattedId);
+                        reportData.reportId = formattedId; // Añadir el ID a los datos
+                        transaction.set(reportRef, reportData);
+                        
+                        return formattedId;
+                    });
+
+                    showMessage(`Report ${newReportId} saved successfully!`, 'success');
+                    newReport(); // Resetear el formulario
+
+                } catch (error) {
+                    console.error("Error in transaction:", error);
+                    showMessage(`Error saving new report: ${error.message}`, 'error');
                 }
-
-            } catch (error) {
-                console.error("Error saving report:", error);
-                showMessage(`Error saving: ${error.message}`, 'error');
+            
+            } else {
+                // --- Lógica de ACTUALIZACIÓN para reportes existentes ---
+                try {
+                    reportData.reportId = currentReportId; // Asegurarse de que el ID está en los datos
+                    // CAMBIO: Path actualizado a la colección pública 'service_reports'
+                    const reportRef = doc(db, `service_reports`, currentReportId);
+                    await setDoc(reportRef, reportData, { merge: true }); // Usar merge para actualizar
+                    showMessage('Report updated successfully!', 'success');
+                } catch (error) {
+                    console.error("Error updating report:", error);
+                    showMessage(`Error updating: ${error.message}`, 'error');
+                }
             }
         }
 
         /**
          * Listens for changes in the reports collection and updates the list.
+         * CAMBIO: La función ahora acepta 'technicianName' y maneja la anulación de suscripción.
          */
-        function setupReportListener() {
-             // CAMBIO: Se elimina appId (ya no está definido) y se usa un path más simple.
-            const reportsColRef = collection(db, `users/${userId}/service_reports`);
-            // Query the last 10 reports
-            const q = query(reportsColRef, limit(10)); 
+        function setupReportListener(technicianName) {
+            
+            // CAMBIO: Añadir una verificación de que db exista antes de usarlo.
+            if (!db) {
+                console.log("setupReportListener skipped: db is not ready.");
+                return; 
+            }
 
-            onSnapshot(q, (snapshot) => {
+            // Si no hay técnico seleccionado (ej. "Select Technician"), mostrar mensaje.
+            if (!technicianName) {
+                reportsList.innerHTML = '<p class="text-center text-gray-500 py-4">Select a technician to see reports.</p>';
+                return;
+            }
+
+            // CAMBIO: Anular la suscripción del listener anterior si existe
+            if (currentReportListener) {
+                currentReportListener();
+            }
+
+            // CAMBIO: Path actualizado a la colección pública 'service_reports'
+            const reportsColRef = collection(db, `service_reports`);
+            
+            // CAMBIO: La consulta ahora filtra por 'technicianName'
+            const q = query(reportsColRef, 
+                          where("technicianName", "==", technicianName), 
+                          limit(10)); 
+
+            // CAMBIO: Guardar la nueva función de anulación de suscripción
+            currentReportListener = onSnapshot(q, (snapshot) => {
                 const reports = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
@@ -775,7 +869,8 @@
                     return dateB - dateA;
                 });
 
-                renderReportList(reports);
+                // CAMBIO: Pasar el nombre del técnico al renderizador para los mensajes
+                renderReportList(reports, technicianName);
             }, (error) => {
                 console.error("Error listening for reports:", error);
                 showMessage("Error loading report list.", 'error');
@@ -784,14 +879,20 @@
 
         /**
          * Renders the list of reports in the DOM.
-         * @param {Array<Object>} reports - The list of reports.
+         * CAMBIO: Acepta 'technicianName' para mostrar mensajes de "no hay reportes" más claros.
          */
-        function renderReportList(reports) {
-            reportsList.innerHTML = '';
-            document.getElementById('loadingMessage').classList.add('hidden');
+        function renderReportList(reports, technicianName) {
+            // CAMBIO: Buscar y ocultar el mensaje de carga ANTES de borrar el innerHTML.
+            const loadingMsg = document.getElementById('loadingMessage');
+            if (loadingMsg) {
+                loadingMsg.classList.add('hidden');
+            }
+            
+            reportsList.innerHTML = ''; // Esta línea borra el loadingMessage, por eso se movió arriba.
 
             if (reports.length === 0) {
-                reportsList.innerHTML = '<p class="text-center text-gray-500 py-4">No reports saved yet.</p>';
+                // CAMBIO: Mensaje específico si no hay reportes para ese técnico
+                reportsList.innerHTML = `<p class="text-center text-gray-500 py-4">No reports found for ${technicianName}.</p>`;
                 return;
             }
 
@@ -844,7 +945,12 @@
             serviceDateInput.value = report.serviceDate; 
             
             // Populate new fields
-            technicianNameSelect.value = report.technicianName || ""; // Set selected name
+            // CAMBIO: Si no hay nombre de técnico, seleccionar el placeholder (índice 0)
+            technicianNameSelect.value = report.technicianName || ""; 
+            if (technicianNameSelect.value === "") {
+                technicianNameSelect.selectedIndex = 0; // Placeholder
+            }
+            
             serviceTypeSelect.value = report.serviceType || 'Paid service'; // NUEVO
             addressInput.value = report.address || '';
             cityInput.value = report.city || '';
@@ -865,7 +971,52 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
             showMessage(`Editing report ${report.reportId} for ${report.clientName}`, 'success');
             lucide.createIcons();
+
+            // CAMBIO: Al editar, actualizar el listener para mostrar 
+            // los reportes del técnico que se está editando.
+            if (technicianNameSelect.value) {
+                setupReportListener(technicianNameSelect.value);
+            }
         }
+        
+        /**
+         * NUEVO: Busca un reporte específico por su ID y lo carga.
+         */
+        async function retrieveReportById() {
+            const reportNumber = retrieveIdInput.value;
+            if (!reportNumber) {
+                showMessage("Please enter a service number.", 'error');
+                return;
+            }
+            if (!db || !userId) {
+                showMessage("Database is not connected.", 'error');
+                return;
+            }
+
+            // Formatear el ID
+            const fullReportId = "SERVICE-" + String(reportNumber).padStart(6, '0');
+            
+            showMessage(`Retrieving ${fullReportId}...`, 'success');
+            
+            try {
+                // CAMBIO: Path actualizado a la colección pública 'service_reports'
+                const reportRef = doc(db, `service_reports`, fullReportId);
+                const docSnap = await getDoc(reportRef);
+
+                if (docSnap.exists()) {
+                    // Cargar el reporte en el editor
+                    editReport(docSnap.data());
+                    showMessage(`Report ${fullReportId} loaded.`, 'success');
+                    retrieveIdInput.value = ''; // Limpiar el input
+                } else {
+                    showMessage(`Report ${fullReportId} not found.`, 'error');
+                }
+            } catch (error) {
+                console.error("Error retrieving report:", error);
+                showMessage(`Error: ${error.message}`, 'error');
+            }
+        }
+
 
         // --- INITIALIZATION AND LISTENERS ---
         
@@ -873,23 +1024,47 @@
          * Main setup function to run the application.
          */
         function setupApp() {
-            // 1. Setup UI elements immediately
-            populateTechnicianDropdown();
-            newReport(); // Prepares form with defaults and IDs
-            lucide.createIcons();
-            
-            // 2. Attach static listeners
-            form.addEventListener('submit', saveReport);
-            newReportButton.addEventListener('click', newReport);
-            exportPdfButton.addEventListener('click', exportToPDF);
-            
-            // 3. Initialize Firebase asynchronously for data persistence
-            initFirebase();
+            try {
+                // 1. Setup UI elements immediately
+                console.log("setupApp: Populating technicians...");
+                // populateTechnicianDropdown(); // Ya no es necesario
+                console.log("setupApp: Starting new report...");
+                newReport(); // Prepares form with defaults and IDs
+                console.log("setupApp: Creating icons...");
+                lucide.createIcons();
+                
+                // 2. Attach static listeners
+                console.log("setupApp: Attaching listeners...");
+                form.addEventListener('submit', saveReport);
+                newReportButton.addEventListener('click', newReport);
+                exportPdfButton.addEventListener('click', exportToPDF);
+                
+                // NUEVO: Listener para el botón Retrieve
+                retrieveButton.addEventListener('click', retrieveReportById);
+                
+                // NUEVO: Listener para el cambio de técnico
+                technicianNameSelect.addEventListener('change', (e) => {
+                    if (e.target.value) {
+                        setupReportListener(e.target.value);
+                    }
+                });
+                
+                // 3. Initialize Firebase asynchronously for data persistence
+                console.log("setupApp: Initializing Firebase...");
+                initFirebase();
+                console.log("setupApp: Setup complete.");
+            } catch (e) {
+                console.error("Error fatal en setupApp:", e);
+                // No usar alert(), usar showMessage si está disponible, o console.error
+                if (typeof showMessage === 'function') {
+                    showMessage(`Error fatal en la aplicación: ${e.message}`, 'error');
+                }
+            }
         }
 
-        window.onload = setupApp;
+        // CAMBIO: Usar DOMContentLoaded en lugar de window.onload
+        document.addEventListener('DOMContentLoaded', setupApp);
     </script>
 </body>
 </html>
-
 
