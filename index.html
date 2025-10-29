@@ -66,14 +66,18 @@
 <body class="min-h-screen">
 
     <div class="main-container mx-auto">
-        <header class="bg-white shadow-lg p-4 rounded-xl mb-6 flex justify-between items-center">
+        <!-- CAMBIO: Clases de Flexbox actualizadas para que se apilen en móviles (flex-col) 
+             y vuelvan a ser fila en pantallas medianas (md:flex-row) -->
+        <header class="bg-white shadow-lg p-4 rounded-xl mb-6 flex flex-col space-y-4 md:flex-row md:justify-between md:items-center md:space-y-0">
             <!-- HEADER FIX: Increased size to 3xl and explicit 'flex items-center' for robust alignment -->
             <h1 class="text-3xl font-bold text-gray-800 flex items-center space-x-2">
                 <!-- IMPORTANT: URL del logo actualizada -->
                 <img src="https://www.flexowash.com/hs-fs/hubfs/FW%20logo%20original_100px.png?width=330&height=83&name=FW%20logo%20original_100px.png" alt="Flexo Wash Logo" class="h-9" id="companyLogo" crossOrigin="anonymous"> 
                 <span class="text-brand-blue-dark">Service Report</span>
             </h1>
-            <button id="newReportButton" class="px-4 py-2 bg-brand-orange text-white font-semibold rounded-lg shadow-md hover:bg-brand-orange-hover transition duration-150 flex items-center">
+            <!-- CAMBIO: Añadido 'w-full' para móvil (para que ocupe todo el ancho) 
+                 y 'md:w-auto' para revertir en escritorio. 'justify-center' para el ícono. -->
+            <button id="newReportButton" class="w-full justify-center px-4 py-2 bg-brand-orange text-white font-semibold rounded-lg shadow-md hover:bg-brand-orange-hover transition duration-150 flex items-center md:w-auto">
                 <i data-lucide="plus-circle" class="w-5 h-5 mr-1"></i>
                 New Report
             </button>
@@ -715,9 +719,15 @@
             durationDaysInput.value = 0;
             durationHoursInput.value = 8;
             
-            // Establecer valores por defecto para los <select>
-            // CAMBIO: Usar .value ahora que los técnicos están en el HTML.
-            technicianNameSelect.value = 'Ramon';
+            // CAMBIO: Cargar el último técnico de localStorage
+            const savedTechnician = localStorage.getItem('lastSelectedTechnician');
+            // Verificar que el técnico guardado sigue siendo válido (por si se edita la lista)
+            if (savedTechnician && TECHNICIANS.includes(savedTechnician)) {
+                technicianNameSelect.value = savedTechnician;
+            } else {
+                technicianNameSelect.value = 'Ramon'; // Default fallback
+            }
+            
             serviceTypeSelect.value = 'Paid service';
 
             // CAMBIO: reportId se deja vacío. El ID se asignará al GUARDAR.
@@ -1043,8 +1053,12 @@
                 retrieveButton.addEventListener('click', retrieveReportById);
                 
                 // NUEVO: Listener para el cambio de técnico
+                // CAMBIO: Ahora también guarda en localStorage
                 technicianNameSelect.addEventListener('change', (e) => {
                     if (e.target.value) {
+                        // 1. Guardar la selección en localStorage
+                        localStorage.setItem('lastSelectedTechnician', e.target.value);
+                        // 2. Actualizar la lista de reportes
                         setupReportListener(e.target.value);
                     }
                 });
@@ -1067,4 +1081,6 @@
     </script>
 </body>
 </html>
+
+
 
