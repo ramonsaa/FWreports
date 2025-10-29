@@ -204,15 +204,24 @@
 
     <!-- Firebase SDKs -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, limit, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        <!-- CAMBIO: Versiones actualizadas a 12.4.0 -->
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, limit, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
         
         // --- GLOBAL CONSTANTS ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'flexowash-service-reports';
-        // IMPORTANT: The firebaseConfig must be defined for saving data to work.
-        // It is typically provided by the execution environment.
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        
+        // CAMBIO: Configuración de Firebase insertada
+        const firebaseConfig = {
+            apiKey: "AIzaSyDkYxAPCDKgt4QcZ44Nz72ZWYBzSMtyJCU",
+            authDomain: "fw-reports.firebaseapp.com",
+            projectId: "fw-reports",
+            storageBucket: "fw-reports.firebasestorage.app", // Corregido "firebasestorage.app"
+            messagingSenderId: "161658306989",
+            appId: "1:161658306989:web:e38a7964295b1bf6396124"
+        };
+        
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
         // List of technicians (hardcoded)
@@ -619,11 +628,8 @@
 
         async function initFirebase() {
             try {
-                if (Object.keys(firebaseConfig).length === 0) {
-                    console.warn("Firebase configuration is empty. Data persistence is disabled.");
-                    document.getElementById('loadingMessage').textContent = "Database persistence is disabled. Only PDF export works.";
-                    return;
-                }
+                // CAMBIO: El if (Object.keys) ya no es necesario
+                // if (Object.keys(firebaseConfig).length === 0) { ... }
                 
                 // setLogLevel('debug'); // Uncomment to see Firestore logs
 
@@ -637,11 +643,10 @@
                         if (user) {
                             userId = user.uid;
                         } else {
-                            if (initialAuthToken) {
-                                await signInWithCustomToken(auth, initialAuthToken);
-                            } else {
-                                await signInAnonymously(auth);
-                            }
+                            // CAMBIO: El token inicial (de __initial_auth_token) ya no se usa,
+                            // porque la config está insertada.
+                            // if (initialAuthToken) { ... }
+                            await signInAnonymously(auth);
                         }
                         // Wait for onAuthStateChanged before resolving
                         resolve();
@@ -660,6 +665,7 @@
             } catch (error) {
                 console.error("Error in initFirebase:", error);
                 showMessage(`Initialization error: ${error.message}`, 'error');
+                document.getElementById('loadingMessage').textContent = `Error: ${error.message}`;
             }
         }
         
@@ -727,7 +733,8 @@
             };
 
             // Build the private collection path
-            const reportRef = doc(db, `artifacts/${appId}/users/${userId}/service_reports`, reportData.reportId);
+            // CAMBIO: Se elimina appId (ya no está definido) y se usa un path más simple.
+            const reportRef = doc(db, `users/${userId}/service_reports`, reportData.reportId);
 
             try {
                 await setDoc(reportRef, reportData);
@@ -748,7 +755,8 @@
          * Listens for changes in the reports collection and updates the list.
          */
         function setupReportListener() {
-            const reportsColRef = collection(db, `artifacts/${appId}/users/${userId}/service_reports`);
+             // CAMBIO: Se elimina appId (ya no está definido) y se usa un path más simple.
+            const reportsColRef = collection(db, `users/${userId}/service_reports`);
             // Query the last 10 reports
             const q = query(reportsColRef, limit(10)); 
 
@@ -883,3 +891,4 @@
     </script>
 </body>
 </html>
+
