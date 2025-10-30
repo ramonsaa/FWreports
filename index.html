@@ -289,7 +289,8 @@
                 </div>
             </div>
 
-            <p class="mt-4 text-xs text-center text-gray-400">Your User ID (for sharing): <span id="currentUserId" class="font-mono text-gray-600 break-all">Loading...</span></p>
+            <!-- CAMBIO: Línea de "Your User ID" eliminada -->
+            <!-- <p class="mt-4 text-xs text-center text-gray-400">Your User ID (for sharing): <span id="currentUserId" class="font-mono text-gray-600 break-all">Loading...</span></p> -->
         </div>
 
     </div>
@@ -353,7 +354,8 @@
         const technicianNameSelect = document.getElementById('technicianName');
         const serviceTypeSelect = document.getElementById('serviceType'); // NUEVO
         const serviceDateInput = document.getElementById('serviceDate');
-        const currentUserIdSpan = document.getElementById('currentUserId');
+        // CAMBIO: Referencia a 'currentUserIdSpan' eliminada
+        // const currentUserIdSpan = document.getElementById('currentUserId');
         const reportIdInput = document.getElementById('reportId');
         const messageBox = document.getElementById('messageBox');
         const exportPdfButton = document.getElementById('exportPdfButton');
@@ -690,16 +692,16 @@
                 y += 10;
 
                 // --- Caja de Cliente y Ubicación ---
-                // CAMBIO: Caja más alta para la fila extra
+                // CAMBIO: Altura de la caja reducida de 60 a 50 para compactar
                 doc.setFillColor('#E0E7FF'); // Azul claro
-                doc.roundedRect(margin, y, contentWidth, 60, 3, 3, 'F'); // x, y, w, h, rx, ry, style
+                doc.roundedRect(margin, y, contentWidth, 50, 3, 3, 'F'); // x, y, w, h, rx, ry, style
                 
                 let box_y = y + 10;
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#1E3A8A');
                 doc.text('Client & Location Details', margin + 5, box_y);
-                box_y += 10;
+                box_y += 8; // CAMBIO: Espaciado reducido de 10 a 8
                 
                 // Cliente y Fecha (Columnas)
                 doc.setFontSize(9);
@@ -712,7 +714,7 @@
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.clientName, margin + 30, box_y);
                 doc.text(formatReadableDate(reportData.serviceDate), x_center + 30, box_y);
-                box_y += 10;
+                box_y += 7; // CAMBIO: Espaciado reducido de 10 a 7
 
                 // Dirección
                 doc.setFont('helvetica', 'bold');
@@ -721,7 +723,7 @@
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.address, margin + 30, box_y);
-                box_y += 10;
+                box_y += 7; // CAMBIO: Espaciado reducido de 10 a 7
                 
                 // CAMBIO: Fila de País y Estado
                 doc.setFont('helvetica', 'bold');
@@ -733,7 +735,7 @@
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.country, margin + 30, box_y);
                 doc.text(reportData.state, x_center + 30, box_y);
-                box_y += 10;
+                box_y += 7; // CAMBIO: Espaciado reducido de 10 a 7
                 
                 // CAMBIO: Fila de Ciudad y Zip
                 doc.setFont('helvetica', 'bold');
@@ -745,7 +747,7 @@
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.city, margin + 30, box_y);
                 doc.text(reportData.zipCode, x_center + 30, box_y);
-                y += 70; // Incrementar Y para pasar la caja (60 + 10)
+                y += 55; // CAMBIO: Incrementar Y para pasar la caja (50 + 5 padding)
 
                 // --- Información de Servicio (Sección Naranja) ---
                 // CAMBIO: Línea vertical más alta
@@ -805,7 +807,7 @@
                 // Usar splitTextToSize para manejar texto largo y saltos de línea
                 const issueLines = doc.splitTextToSize(reportData.issueDescription, contentWidth - 5);
                 doc.text(issueLines, margin + 5, y);
-                y += (issueLines.length * 5) + 10; // 5mm por línea + 10mm padding
+                y += (issueLines.length * 5) + 5; // CAMBIO: 5mm por línea + 5mm padding
 
                 // --- Trabajo Realizado (Texto largo) ---
                 doc.setDrawColor('#F97316'); // Naranja
@@ -821,7 +823,7 @@
                 doc.setTextColor('#1F2937');
                 const workLines = doc.splitTextToSize(reportData.workPerformed, contentWidth - 5);
                 doc.text(workLines, margin + 5, y);
-                y += (workLines.length * 5) + 10;
+                y += (workLines.length * 5) + 5; // CAMBIO: 5mm por línea + 5mm padding
 
                 // --- NUEVO: Sección de Firma ---
                 // CAMBIO: Toda la sección de firma ahora es condicional.
@@ -915,7 +917,8 @@
 
                 // Once authenticated, get the final ID and configure the UI
                 userId = auth.currentUser?.uid || crypto.randomUUID();
-                currentUserIdSpan.textContent = userId;
+                // CAMBIO: Línea eliminada, el elemento HTML ya no existe
+                // currentUserIdSpan.textContent = userId; 
                 
                 // CAMBIO: Cargar técnicos DESPUÉS de inicializar db
                 await loadAndPopulateTechnicians();
@@ -1421,5 +1424,4 @@
     </script>
 </body>
 </html>
-
 
