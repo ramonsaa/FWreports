@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- LIBRERÍA PDF: jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- NUEVO: LIBRERÍA DE FIRMA -->
+    <!-- LIBRERÍA DE FIRMA -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/signature_pad/4.1.7/signature_pad.umd.min.js"></script>
     
     <!-- Configuración del font Inter por defecto -->
@@ -61,12 +61,12 @@
             border-color: #1E3A8A;
         }
 
-        /* NUEVO: Estilos para el lienzo de firma */
+        /* Estilos para el lienzo de firma */
         #signaturePadWrapper {
             position: relative;
             border: 2px dashed #BFDBFE; /* Borde azul claro */
             border-radius: 0.5rem;
-            /* CAMBIO: Quitar altura fija y poner relación de aspecto 2:1 */
+            /* Relación de aspecto 2:1 */
             aspect-ratio: 2 / 1;
             /* Forzar el fondo blanco para que la firma PNG no sea transparente */
             background-color: #ffffff; 
@@ -102,27 +102,22 @@
 <body class="min-h-screen">
 
     <div class="main-container mx-auto">
-        <!-- CAMBIO: Clases de Flexbox actualizadas para que se apilen en móviles (flex-col) 
-             y vuelvan a ser fila en pantallas medianas (md:flex-row) -->
+        <!-- Header Responsivo -->
         <header class="bg-white shadow-lg p-4 rounded-xl mb-6 flex flex-col space-y-4 md:flex-row md:justify-between md:items-center md:space-y-0">
-            <!-- HEADER FIX: Increased size to 3xl and explicit 'flex items-center' for robust alignment -->
             <h1 class="text-3xl font-bold text-gray-800 flex items-center space-x-2">
-                <!-- IMPORTANT: URL del logo actualizada -->
                 <img src="https://www.flexowash.com/hs-fs/hubfs/FW%20logo%20original_100px.png?width=330&height=83&name=FW%20logo%20original_100px.png" alt="Flexo Wash Logo" class="h-9" id="companyLogo" crossOrigin="anonymous"> 
                 <span class="text-brand-blue-dark">Service Report</span>
             </h1>
-            <!-- CAMBIO: Añadido 'w-full' para móvil (para que ocupe todo el ancho) 
-                 y 'md:w-auto' para revertir en escritorio. 'justify-center' para el ícono. -->
             <button id="newReportButton" class="w-full justify-center px-4 py-2 bg-brand-orange text-white font-semibold rounded-lg shadow-md hover:bg-brand-orange-hover transition duration-150 flex items-center md:w-auto">
                 <i data-lucide="plus-circle" class="w-5 h-5 mr-1"></i>
                 New Report
             </button>
         </header>
 
-        <!-- Contenedor de Alertas Personalizado -->
+        <!-- Contenedor de Alertas -->
         <div id="messageBox" class="hidden fixed top-4 right-4 z-50 p-4 rounded-lg text-white font-semibold shadow-xl transition-opacity duration-300 ease-in-out" role="alert"></div>
 
-        <!-- Sección de Formulario de Reporte -->
+        <!-- Sección de Formulario -->
         <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
             <h2 class="text-xl font-semibold mb-4 border-b pb-2 text-gray-700">Service Details</h2>
             <form id="serviceReportForm" class="space-y-4">
@@ -133,13 +128,12 @@
                     <!-- Technician Name Dropdown -->
                     <div>
                         <label for="technicianName" class="block text-sm font-medium text-gray-700">Technician Name</label>
-                        <!-- CAMBIO: Lista se llenará desde Firebase -->
                         <select id="technicianName" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark">
                             <option value="" disabled>Loading technicians...</option>
                         </select>
                     </div>
 
-                    <!-- NUEVO: Service Type Dropdown -->
+                    <!-- Service Type Dropdown -->
                     <div>
                         <label for="serviceType" class="block text-sm font-medium text-gray-700">Service Type</label>
                         <select id="serviceType" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark">
@@ -147,13 +141,14 @@
                             <option value="PM service">PM service</option>
                             <option value="Warranty LLC">Warranty LLC</option>
                             <option value="Warranty APS">Warranty APS</option>
+                            <option value="New Installation">New Installation</option>
                         </select>
                     </div>
                 </div>
 
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Service Date (now only date) -->
+                    <!-- Service Date -->
                     <div>
                         <label for="serviceDate" class="block text-sm font-medium text-gray-700">Service Date</label>
                         <input type="date" id="serviceDate" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark">
@@ -164,7 +159,7 @@
                     </div>
                 </div>
 
-                <!-- NEW: Service Duration Fields -->
+                <!-- Service Duration Fields -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Service Duration</label>
                     <div class="grid grid-cols-2 gap-4">
@@ -173,20 +168,19 @@
                             <span class="text-sm font-medium text-gray-700">Days</span>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <input type="number" id="durationHours" min="0" max="23" required value="8" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark text-right">
+                            <input type="number" id="durationHours" min="0" max="23" required value="1" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark text-right">
                             <span class="text-sm font-medium text-gray-700">Hours</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- CAMBIO: Sección de Ubicación de Servicio actualizada -->
+                <!-- Service Location -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Service Location</label>
                     <div class="space-y-2 mt-1">
-                        <!-- Campo de Dirección (sin cambios) -->
                         <input type="text" id="address" required placeholder="Address (Ex: Main Street #123)" class="block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark">
                         
-                        <!-- NUEVO: Fila para País y Estado -->
+                        <!-- Fila para País y Estado -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <div>
                                 <label for="country" class="block text-xs font-medium text-gray-600">Country</label>
@@ -244,7 +238,7 @@
                     </div>
                 </div>
 
-                <!-- NUEVO: Sección de Firma -->
+                <!-- Sección de Firma -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Client Signature (Optional)</label>
                     <div id="signaturePadWrapper" class="mt-1">
@@ -254,14 +248,14 @@
                 </div>
 
                 <div class="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- SAVE/UPDATE BUTTON: Added IDs for text and icon to allow precise JS manipulation -->
+                    <!-- Botones de Acción -->
                     <button type="submit" id="saveButton" class="w-full px-4 py-3 bg-brand-blue-dark text-white font-bold rounded-lg shadow-md hover:bg-brand-blue-dark-hover transition duration-150 flex items-center justify-center">
                         <i data-lucide="save" id="saveIcon" class="w-5 h-5 mr-2"></i>
                         <span id="saveButtonText">Save Report</span>
                     </button>
                     <button type="button" id="exportPdfButton" class="w-full px-4 py-3 bg-brand-orange text-white font-bold rounded-lg shadow-md hover:bg-brand-orange-hover transition duration-150 flex items-center justify-center">
-                        <i data-lucide="file-text" class="w-5 h-5 mr-2"></i>
-                        Export to PDF
+                        <i data-lucide="cloud-upload" class="w-5 h-5 mr-2"></i>
+                        PDF & Upload
                     </button>
                 </div>
             </form>
@@ -275,7 +269,7 @@
                 <!-- Reports will be inserted here -->
             </div>
             
-            <!-- NUEVO: Sección para recuperar reportes antiguos -->
+            <!-- Sección para recuperar reportes antiguos -->
             <div class="mt-6 pt-4 border-t border-gray-200">
                 <label for="retrieveIdInput" class="block text-sm font-medium text-gray-700">Retrieve Old Report by Number</label>
                 <div class="mt-1 flex space-x-2">
@@ -288,44 +282,35 @@
                     </button>
                 </div>
             </div>
-
-            <!-- CAMBIO: Línea de "Your User ID" eliminada -->
-            <!-- <p class="mt-4 text-xs text-center text-gray-400">Your User ID (for sharing): <span id="currentUserId" class="font-mono text-gray-600 break-all">Loading...</span></p> -->
         </div>
 
     </div>
 
     <!-- Firebase SDKs -->
     <script type="module">
-        // CAMBIO: Versiones actualizadas a 12.4.0 (Corregido de HTML a JS comment)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-        // CAMBIO: Imports añadidos para transacciones (runTransaction, getDoc, where, getDocs, orderBy)
-        // CORRECCIÓN: Arreglado el error tipográfico "httpsD://"
         import { getFirestore, doc, setDoc, onSnapshot, collection, query, limit, serverTimestamp, setLogLevel, runTransaction, getDoc, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-storage.js";
         
         // --- GLOBAL CONSTANTS ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'flexowash-service-reports';
         
-        // CAMBIO: Configuración de Firebase reescrita manualmente para eliminar caracteres ocultos.
-        // CAMBIO 2: Corregido 'storageBucket' de .firebasestorage.app a .appspot.com
         const firebaseConfig = {
             apiKey: "AIzaSyDkYxAPCDKgt4QcZ44Nz72ZWYBzSMtyJCU",
             authDomain: "fw-reports.firebaseapp.com",
             projectId: "fw-reports",
-            storageBucket: "fw-reports.appspot.com", // CORRECCIÓN AQUÍ
+            storageBucket: "fw-reports.appspot.com",
             messagingSenderId: "161658306989",
             appId: "1:161658306989:web:e38a7964295b1bf6396124"
         };
         
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
-        // CAMBIO: Lista 'hardcoded' de técnicos eliminada.
-        
-        // NUEVO: Array global para almacenar los técnicos cargados
+        // Array global para almacenar los técnicos cargados de Firebase
         let loadedTechnicians = [];
         
-        // NUEVO: Listas de Estados/Provincias
+        // Listas de Estados/Provincias
         const COUNTRY_STATES = {
             "USA": [
                 "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", 
@@ -352,68 +337,49 @@
         const reportsList = document.getElementById('reportsList');
         const newReportButton = document.getElementById('newReportButton');
         const technicianNameSelect = document.getElementById('technicianName');
-        const serviceTypeSelect = document.getElementById('serviceType'); // NUEVO
+        const serviceTypeSelect = document.getElementById('serviceType');
         const serviceDateInput = document.getElementById('serviceDate');
-        // CAMBIO: Referencia a 'currentUserIdSpan' eliminada
-        // const currentUserIdSpan = document.getElementById('currentUserId');
         const reportIdInput = document.getElementById('reportId');
         const messageBox = document.getElementById('messageBox');
         const exportPdfButton = document.getElementById('exportPdfButton');
         
-        // NEW DOM References for Save Button
         const saveButtonText = document.getElementById('saveButtonText');
         const saveIcon = document.getElementById('saveIcon');
         
-        // New Duration Fields
         const durationDaysInput = document.getElementById('durationDays');
         const durationHoursInput = document.getElementById('durationHours');
 
-        // New Address Fields
         const addressInput = document.getElementById('address');
         const cityInput = document.getElementById('city');
-        // CAMBIO: Referencias para País y Estado
         const countrySelect = document.getElementById('country');
         const stateSelect = document.getElementById('state');
         const zipCodeInput = document.getElementById('zipCode');
         
-        // NUEVO: Referencias para Retrieve
         const retrieveIdInput = document.getElementById('retrieveIdInput');
         const retrieveButton = document.getElementById('retrieveButton');
         
-        // NUEVO: Referencias para Firma
         const signaturePadCanvas = document.getElementById('signaturePad');
         const clearSignatureButton = document.getElementById('clearSignatureButton');
         
         let db;
         let auth;
+        let storage;
         let userId = 'loading';
         let currentReportListener = null; 
-        let signaturePadInstance = null; // NUEVO: Instancia del pad de firma
+        let signaturePadInstance = null;
         
         // --- UTILITIES ---
 
-        /**
-         * Displays a temporary alert message in the top right corner.
-         * @param {string} message - The message to display.
-         * @param {string} type - 'success' or 'error'.
-         */
         function showMessage(message, type) {
             const isSuccess = type === 'success';
             messageBox.textContent = message;
             messageBox.className = `fixed top-4 right-4 z-50 p-4 rounded-lg font-semibold shadow-xl transition-opacity duration-300 ease-in-out ${isSuccess ? 'bg-green-500' : 'bg-red-500'}`;
             messageBox.classList.remove('hidden');
-
-            // Hide after 4 seconds
             setTimeout(() => {
                 messageBox.classList.add('hidden');
             }, 4000);
         }
 
-        /**
-         * Formats a Date object to YYYY-MM-DD format (required by input[type=date]).
-         * @param {Date} date - Date object to format.
-         * @returns {string} Formatted date.
-         */
         function formatDateLocal(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -421,19 +387,12 @@
             return `${year}-${month}-${day}`;
         }
 
-        /**
-         * Formats a date string to a readable date string.
-         * @param {string} dateString - Date string from the input (YYYY-MM-DD).
-         * @returns {string} Readable format.
-         */
         function formatReadableDate(dateString) {
             if (!dateString) return 'N/A';
-            // Ensure the input is treated as a date string without time zone offset issues
             const parts = dateString.split('-');
             const date = new Date(parts[0], parts[1] - 1, parts[2]); 
             
             if (isNaN(date)) {
-                 // Fallback for non-standard date objects (e.g., from serverTimestamp)
                  try {
                     return new Date(dateString).toLocaleDateString('en-US', { 
                         year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
@@ -442,22 +401,15 @@
                      return dateString;
                  }
             }
-
-            // Options for a clear, professional look
-            const options = {
-                year: 'numeric', month: 'long', day: 'numeric'
-            };
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
             return date.toLocaleDateString('en-US', options);
         }
         
-        /**
-         * NUEVO: Populates the state/province dropdown based on the selected country.
-         */
         function populateStates(country) {
             const selectedCountry = country;
             const states = COUNTRY_STATES[selectedCountry] || [];
             
-            stateSelect.innerHTML = ''; // Clear existing options
+            stateSelect.innerHTML = ''; 
 
             if (states.length === 0) {
                 const option = document.createElement('option');
@@ -467,7 +419,6 @@
                 return;
             }
 
-            // Add a default placeholder
             const placeholder = document.createElement('option');
             placeholder.value = "";
             placeholder.textContent = "Select state / province...";
@@ -475,7 +426,6 @@
             placeholder.selected = true;
             stateSelect.appendChild(placeholder);
 
-            // Add the states/provinces
             states.forEach(state => {
                 const option = document.createElement('option');
                 option.value = state;
@@ -484,62 +434,52 @@
             });
         }
         
-        /**
-         * NUEVO: Carga los técnicos desde Firestore y los almacena globalmente.
-         */
+        // Carga técnicos desde Firestore
         async function loadAndPopulateTechnicians() {
             try {
                 const techCol = collection(db, 'technicians');
-                // CAMBIO: Ordenar por 'techId' para consistencia
                 const q = query(techCol, orderBy('techId')); 
                 const querySnapshot = await getDocs(q);
                 
-                loadedTechnicians = []; // Limpiar el array
+                loadedTechnicians = []; 
                 querySnapshot.forEach(doc => {
-                    // Guardar un objeto con el ID (T001) y el nombre (Ramon)
+                    const data = doc.data();
                     loadedTechnicians.push({
-                        id: doc.data().techId,  // e.g., "T001"
-                        name: doc.data().name // e.g., "Ramon"
+                        id: data.techId, 
+                        name: data.name
                     });
                 });
 
-                // Poblar el dropdown
                 populateTechnicianDropdown();
 
             } catch (error) {
                 console.error("Error loading technicians:", error);
-                showMessage("Error loading technician list. Check console and Firebase setup.", 'error');
+                showMessage("Error loading technician list from DB.", 'error');
                 technicianNameSelect.innerHTML = '<option value="" disabled>Error loading technicians</option>';
             }
         }
         
-        /**
-         * NUEVO: Llena el dropdown de técnicos desde el array global 'loadedTechnicians'.
-         */
         function populateTechnicianDropdown() {
-            technicianNameSelect.innerHTML = ''; // Limpiar
+            technicianNameSelect.innerHTML = ''; 
 
             if (loadedTechnicians.length === 0) {
                 technicianNameSelect.innerHTML = '<option value="" disabled>No technicians found</option>';
                 return;
             }
 
-            // Añadir placeholder
             const placeholder = document.createElement('option');
             placeholder.value = "";
             placeholder.textContent = "Select Technician";
             placeholder.disabled = true;
             technicianNameSelect.appendChild(placeholder);
 
-            // Añadir técnicos
             loadedTechnicians.forEach(tech => {
                 const option = document.createElement('option');
-                option.value = tech.id; // El valor es el ID (ej: T001)
-                option.textContent = tech.name; // El texto es el Nombre (ej: Ramon)
+                option.value = tech.id; 
+                option.textContent = tech.name; 
                 technicianNameSelect.appendChild(option);
             });
 
-            // Seleccionar el técnico guardado o el primero de la lista
             const savedTechId = localStorage.getItem('lastSelectedTechnicianId');
             if (savedTechId && loadedTechnicians.some(t => t.id == savedTechId)) {
                 technicianNameSelect.value = savedTechId;
@@ -548,28 +488,19 @@
             }
         }
 
-
-        /**
-         * NUEVO: Carga la imagen del logo y la convierte a Base64 para el PDF.
-         * Esto es necesario para que jsPDF pueda manejar la imagen de forma fiable.
-         */
         async function getLogoBase64() {
             const logoEl = document.getElementById('companyLogo');
             const logoUrl = logoEl.src;
 
-            // Si es un placeholder, no podemos cargarlo por CORS, así que lo saltamos.
             if (logoUrl.includes('placehold.co')) {
-                 console.warn('PDF Export: Usando placeholder, el logo será omitido. Reemplaza la URL del logo.');
+                 console.warn('PDF Export: Usando placeholder, el logo será omitido.');
                  return null;
             }
             
             try {
-                // Usamos fetch para obtener la imagen
-                const response = await fetch(logoUrl, { mode: 'cors' }); // 'cors' es crucial
+                const response = await fetch(logoUrl, { mode: 'cors' });
                 if (!response.ok) return null;
                 const blob = await response.blob();
-                
-                // Convertir Blob a Base64
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onloadend = () => resolve(reader.result);
@@ -577,48 +508,64 @@
                     reader.readAsDataURL(blob);
                 });
             } catch (error) {
-                // Un error de CORS es común si el servidor de la imagen no lo permite
-                console.error("Error cargando logo para PDF (puede ser CORS):", error);
-                showMessage("Error al cargar el logo para PDF. Asegúrate de que tu logo esté alojado en un sitio que permita CORS (como Imgur).", 'error');
+                console.error("Error cargando logo para PDF:", error);
                 return null;
             }
         }
 
-
-        // --- PDF EXPORT FUNCTIONALITY (REESCRITO CON jspdf) ---
-
         /**
-         * NUEVO: exportToPDF
-         * Genera el PDF "dibujando" el contenido con la API de jsPDF.
+         * Sube el archivo a Firebase Storage
          */
+        async function uploadToFirebaseStorage(pdfBlob, fileName) {
+            if (!storage) {
+                console.error("Firebase Storage not initialized");
+                showMessage("Error: Cloud storage not available.", 'error');
+                return;
+            }
+
+            showMessage('Uploading to Firebase Storage...', 'success');
+            
+            try {
+                // Referencia: carpeta 'pdf_reports' / nombre del archivo
+                const storageRef = ref(storage, `pdf_reports/${fileName}`);
+                
+                // Subir
+                const snapshot = await uploadBytes(storageRef, pdfBlob);
+                console.log('Uploaded a blob or file!', snapshot);
+                
+                showMessage('PDF downloaded & uploaded to Cloud successfully!', 'success');
+
+            } catch (error) {
+                console.error("Firebase Storage Error:", error);
+                showMessage(`Local save OK, but Cloud upload failed: ${error.message}`, 'error');
+            }
+        }
+
+        // --- PDF EXPORT FUNCTIONALITY ---
+
         async function exportToPDF() {
-            // 1. Revisar campos requeridos
             const requiredFields = [
                 document.getElementById('clientName').value,
                 document.getElementById('serviceDate').value,
                 document.getElementById('issueDescription').value,
                 document.getElementById('workPerformed').value,
-                technicianNameSelect.value, // CAMBIO: Usar ID
-                serviceTypeSelect.value, // NUEVO
+                technicianNameSelect.value,
+                serviceTypeSelect.value,
                 addressInput.value,
                 cityInput.value,
-                countrySelect.value, // NUEVO
-                stateSelect.value,   // NUEVO
+                countrySelect.value,
+                stateSelect.value,
                 zipCodeInput.value
             ];
 
             const allFieldsFilled = requiredFields.every(value => value && value.trim() !== '');
 
             if (!allFieldsFilled) {
-                showMessage("Please fill in all required fields (Client, Date, Location, Description, Work Performed, Service Type) before exporting.", 'error');
+                showMessage("Please fill in all required fields before exporting.", 'error');
                 return;
             }
             
-            // CAMBIO: La firma ya no es requerida para exportar
-            
-            // 2. Recolectar datos
             const reportData = {
-                // CAMBIO: Si el reportId está vacío (nuevo reporte), mostrar "Pending" en el PDF
                 reportId: reportIdInput.value || 'SERVICE-PENDING', 
                 clientName: document.getElementById('clientName').value,
                 serviceDate: document.getElementById('serviceDate').value,
@@ -626,64 +573,57 @@
                 workPerformed: document.getElementById('workPerformed').value,
                 status: document.getElementById('status').value,
                 technicianName: technicianNameSelect.options[technicianNameSelect.selectedIndex].text,
-                serviceType: serviceTypeSelect.value, // NUEVO
+                serviceType: serviceTypeSelect.value, 
                 address: addressInput.value,
                 city: cityInput.value,
-                country: countrySelect.value, // NUEVO
-                state: stateSelect.value,     // NUEVO
+                country: countrySelect.value, 
+                state: stateSelect.value,
                 zipCode: zipCodeInput.value,
                 durationDays: durationDaysInput.value,
                 durationHours: durationHoursInput.value
             };
             
-            // CAMBIO: El nombre del archivo ahora es solo el ID del reporte
             const fileName = `${reportData.reportId}.pdf`;
 
             showMessage('Generating PDF...', 'success');
 
             try {
-                // 3. Inicializar jsPDF
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('p', 'mm', 'a4'); // 'p'ortrait, 'mm', A4 size
-                const logoData = await getLogoBase64(); // Esperar a que el logo cargue
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const logoData = await getLogoBase64(); 
 
-                // Definir constantes de layout
                 const pageWidth = doc.internal.pageSize.getWidth();
-                // CAMBIO: Mover pageHeight aquí para que sea global a la función
                 const pageHeight = doc.internal.pageSize.getHeight();
                 const margin = 14;
                 const contentWidth = pageWidth - (margin * 2);
                 const x_center = pageWidth / 2;
-                let y = 20; // Posición Y actual (va incrementando)
+                let y = 20; 
 
-                // 4. DIBUJAR EL PDF
-                
                 // --- Encabezado ---
                 if (logoData) {
-                    // Nota: 40x10 son dimensiones de ejemplo, ajusta si es necesario
                     doc.addImage(logoData, 'PNG', margin, 15, 40, 10); 
                 }
                 doc.setFontSize(20);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#1E3A8A');
                 doc.text('Service Report', pageWidth - margin, 22, { align: 'right' });
-                y = 35; // Bajar Y
+                y = 35; 
                 doc.setLineWidth(1);
                 doc.setDrawColor('#1E3A8A');
-                doc.line(margin, y, pageWidth - margin, y); // Línea horizontal
+                doc.line(margin, y, pageWidth - margin, y); 
                 y += 10;
 
                 // --- ID de Reporte y Status ---
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'bold');
-                doc.setTextColor('#4B5563'); // Gris
+                doc.setTextColor('#4B5563');
                 doc.text('Report ID:', margin, y);
                 doc.setFont('helvetica', 'normal');
-                doc.setTextColor('#1F2937'); // Negro
+                doc.setTextColor('#1F2937');
                 doc.text(reportData.reportId, margin + 25, y);
 
                 doc.setFont('helvetica', 'bold');
-                doc.setTextColor('#4B5563'); // Gris
+                doc.setTextColor('#4B5563');
                 doc.text('Status:', pageWidth - margin - 30, y);
                 doc.setFont('helvetica', 'bold');
                 const statusColor = reportData.status === 'Completed' ? '#10B981' : reportData.status === 'Pending' ? '#F59E0B' : '#EF4444';
@@ -692,18 +632,17 @@
                 y += 10;
 
                 // --- Caja de Cliente y Ubicación ---
-                // CAMBIO: Altura de la caja reducida de 60 a 50 para compactar
-                doc.setFillColor('#E0E7FF'); // Azul claro
-                doc.roundedRect(margin, y, contentWidth, 50, 3, 3, 'F'); // x, y, w, h, rx, ry, style
+                // Altura reducida de 60 a 50 para compactar
+                doc.setFillColor('#E0E7FF'); 
+                doc.roundedRect(margin, y, contentWidth, 50, 3, 3, 'F'); 
                 
                 let box_y = y + 10;
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#1E3A8A');
                 doc.text('Client & Location Details', margin + 5, box_y);
-                box_y += 8; // CAMBIO: Espaciado reducido de 10 a 8
+                box_y += 8; // Espaciado reducido
                 
-                // Cliente y Fecha (Columnas)
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#4B5563');
@@ -714,18 +653,16 @@
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.clientName, margin + 30, box_y);
                 doc.text(formatReadableDate(reportData.serviceDate), x_center + 30, box_y);
-                box_y += 7; // CAMBIO: Espaciado reducido de 10 a 7
+                box_y += 7; // Espaciado reducido
 
-                // Dirección
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#4B5563');
                 doc.text('Address:', margin + 5, box_y);
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.address, margin + 30, box_y);
-                box_y += 7; // CAMBIO: Espaciado reducido de 10 a 7
+                box_y += 7; // Espaciado reducido
                 
-                // CAMBIO: Fila de País y Estado
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#4B5563');
                 doc.text('Country:', margin + 5, box_y);
@@ -735,9 +672,8 @@
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.country, margin + 30, box_y);
                 doc.text(reportData.state, x_center + 30, box_y);
-                box_y += 7; // CAMBIO: Espaciado reducido de 10 a 7
+                box_y += 7; // Espaciado reducido
                 
-                // CAMBIO: Fila de Ciudad y Zip
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#4B5563');
                 doc.text('City:', margin + 5, box_y);
@@ -747,13 +683,12 @@
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.city, margin + 30, box_y);
                 doc.text(reportData.zipCode, x_center + 30, box_y);
-                y += 55; // CAMBIO: Incrementar Y para pasar la caja (50 + 5 padding)
+                y += 55; // Incremento reducido (50 + 5)
 
-                // --- Información de Servicio (Sección Naranja) ---
-                // CAMBIO: Línea vertical más alta
+                // --- Información de Servicio ---
                 doc.setLineWidth(1);
-                doc.setDrawColor('#F97316'); // Naranja
-                doc.line(margin, y, margin, y + 25); // Línea vertical
+                doc.setDrawColor('#F97316'); 
+                doc.line(margin, y, margin, y + 25); 
                 
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
@@ -761,7 +696,6 @@
                 doc.text('Service Information', margin + 5, y + 5);
                 y += 15;
                 
-                // Cálculo de duración
                 let durationString = '';
                 const days = parseInt(reportData.durationDays || 0);
                 const hours = parseInt(reportData.durationHours || 0);
@@ -770,7 +704,6 @@
                 if (hours > 0) durationString += `${hours} Hour${hours !== 1 ? 's' : ''}`;
                 if (!durationString) durationString = 'Not recorded';
 
-                // CAMBIO: Layout de 2 líneas
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#4B5563');
@@ -781,7 +714,7 @@
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.technicianName, margin + 40, y);
                 doc.text(durationString, x_center + 35, y);
-                y += 7; // Siguiente línea
+                y += 7; 
 
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#4B5563');
@@ -790,11 +723,11 @@
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.serviceType, margin + 40, y);
                 
-                y += 13; // Padding
+                y += 13; 
 
-                // --- Descripción de Problema (Texto largo) ---
-                doc.setDrawColor('#F97316'); // Naranja
-                doc.line(margin, y, margin, y + 10); // Línea vertical corta
+                // --- Descripción de Problema ---
+                doc.setDrawColor('#F97316'); 
+                doc.line(margin, y, margin, y + 10); 
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#1E3A8A');
@@ -804,14 +737,13 @@
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor('#1F2937');
-                // Usar splitTextToSize para manejar texto largo y saltos de línea
                 const issueLines = doc.splitTextToSize(reportData.issueDescription, contentWidth - 5);
                 doc.text(issueLines, margin + 5, y);
-                y += (issueLines.length * 5) + 5; // CAMBIO: 5mm por línea + 5mm padding
+                y += (issueLines.length * 5) + 5; // Padding reducido
 
-                // --- Trabajo Realizado (Texto largo) ---
-                doc.setDrawColor('#F97316'); // Naranja
-                doc.line(margin, y, margin, y + 10); // Línea vertical corta
+                // --- Trabajo Realizado ---
+                doc.setDrawColor('#F97316'); 
+                doc.line(margin, y, margin, y + 10); 
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#1E3A8A');
@@ -823,21 +755,17 @@
                 doc.setTextColor('#1F2937');
                 const workLines = doc.splitTextToSize(reportData.workPerformed, contentWidth - 5);
                 doc.text(workLines, margin + 5, y);
-                y += (workLines.length * 5) + 5; // CAMBIO: 5mm por línea + 5mm padding
+                y += (workLines.length * 5) + 5; // Padding reducido
 
-                // --- NUEVO: Sección de Firma ---
-                // CAMBIO: Toda la sección de firma ahora es condicional.
-                // Solo se ejecuta si la firma NO está vacía.
+                // --- Firma Opcional ---
                 if (signaturePadInstance && !signaturePadInstance.isEmpty()) {
-                    const footerHeight = 30; // Espacio para el footer
-                    // CAMBIO: Altura de la caja de firma reducida
+                    const footerHeight = 30;
                     let signatureHeight = 30; 
                     let signatureBoxY = y;
 
-                    // Revisar si la firma cabe en la página actual
                     if (signatureBoxY + signatureHeight + footerHeight > pageHeight) {
                         doc.addPage();
-                        y = 20; // Resetear Y en la nueva página
+                        y = 20; 
                         signatureBoxY = y;
                     }
 
@@ -847,43 +775,47 @@
                     doc.text('Client Signature & Approval', margin, signatureBoxY);
                     signatureBoxY += 7;
 
-                    // Dibujar la caja de la firma
                     doc.setLineWidth(0.5);
-                    doc.setDrawColor('#BFDBFE'); // Borde azul claro
+                    doc.setDrawColor('#BFDBFE'); 
+                    const signatureWidth = 60; 
+                    const signatureX = (pageWidth - signatureWidth) / 2; 
                     
-                    // CAMBIO: Definir ancho de firma (60mm) para mantener 2:1 y centrarlo
-                    const signatureWidth = 60; // 60mm de ancho
-                    const signatureX = (pageWidth - signatureWidth) / 2; // Centrar la caja
+                    doc.roundedRect(signatureX, signatureBoxY, signatureWidth, signatureHeight, 3, 3, 'S'); 
                     
-                    doc.roundedRect(signatureX, signatureBoxY, signatureWidth, signatureHeight, 3, 3, 'S'); // 'S'troke
-                    
-                    // Obtener la firma como imagen
-                    // Usamos fondo blanco ('image/jpeg') para evitar problemas de transparencia
                     const signatureDataUrl = signaturePadInstance.toDataURL('image/jpeg', 0.8);
-                    
-                    // Añadir la imagen al PDF (escalada para caber)
-                    // CAMBIO: Usar signatureX y signatureWidth
                     doc.addImage(signatureDataUrl, 'JPEG', signatureX + 1, signatureBoxY + 1, signatureWidth - 2, signatureHeight - 2);
-                } // <-- FIN DEL BLOQUE CONDICIONAL DE FIRMA
+                } 
 
 
-                // --- Footer (al final de la página) ---
-                doc.setLineWidth(0.5);
-                doc.setDrawColor('#E5E7EB'); // Gris claro
-                doc.line(margin, pageHeight - 20, pageWidth - margin, pageHeight - 20);
-                
-                doc.setFontSize(8);
-                doc.setTextColor('#6B7280');
-                // CAMBIO: Fecha de servicio en lugar de fecha de generación
-                doc.text(`Service Date: ${formatReadableDate(reportData.serviceDate)}`, x_center, pageHeight - 15, { align: 'center' });
-                // CAMBIO: Email actualizado
-                doc.text('Contact us at: service@flexowashus.com', x_center, pageHeight - 10, { align: 'center' });
+                // --- Footer en todas las páginas ---
+                const pageCount = doc.internal.getNumberOfPages();
+                for(let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i); 
+                    
+                    doc.setLineWidth(0.5);
+                    doc.setDrawColor('#E5E7EB'); 
+                    doc.line(margin, pageHeight - 20, pageWidth - margin, pageHeight - 20);
+                    
+                    doc.setFontSize(8);
+                    doc.setTextColor('#6B7280');
+                    const footerTextLeft = `Service ID: ${reportData.reportId}`;
+                    const footerTextCenter = `Service Date: ${formatReadableDate(reportData.serviceDate)}`;
+                    const footerTextRight = `Page ${i} of ${pageCount}`;
 
-                // 5. Guardar el archivo
+                    doc.text(footerTextLeft, margin, pageHeight - 15);
+                    doc.text(footerTextCenter, x_center, pageHeight - 15, { align: 'center' });
+                    doc.text(footerTextRight, pageWidth - margin, pageHeight - 15, { align: 'right' });
+                    
+                    doc.text('Contact us at: service@flexowashus.com', x_center, pageHeight - 10, { align: 'center' });
+                }
+
+                // GUARDAR LOCALMENTE
                 doc.save(fileName);
-                showMessage('PDF exported successfully!', 'success');
                 
-                // 6. Limpiar la firma después de exportar
+                // SUBIR A FIREBASE STORAGE
+                const pdfBlob = doc.output('blob');
+                await uploadToFirebaseStorage(pdfBlob, fileName);
+                
                 if (signaturePadInstance) {
                     signaturePadInstance.clear();
                 }
@@ -902,8 +834,8 @@
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
+                storage = getStorage(app);
 
-                // Authentication
                 await new Promise((resolve) => {
                     onAuthStateChanged(auth, async (user) => {
                         if (user) {
@@ -915,15 +847,10 @@
                     });
                 });
 
-                // Once authenticated, get the final ID and configure the UI
                 userId = auth.currentUser?.uid || crypto.randomUUID();
-                // CAMBIO: Línea eliminada, el elemento HTML ya no existe
-                // currentUserIdSpan.textContent = userId; 
                 
-                // CAMBIO: Cargar técnicos DESPUÉS de inicializar db
                 await loadAndPopulateTechnicians();
                 
-                // CAMBIO: Obtener el ID del técnico guardado de localStorage
                 const savedTechnicianId = localStorage.getItem('lastSelectedTechnicianId');
                 let initialTechnicianId = null;
 
@@ -931,16 +858,14 @@
                     initialTechnicianId = savedTechnicianId;
                     technicianNameSelect.value = savedTechnicianId;
                 } else if (loadedTechnicians.length > 0) {
-                    initialTechnicianId = loadedTechnicians[0].id; // Default al primero
+                    initialTechnicianId = loadedTechnicians[0].id; 
                     technicianNameSelect.value = initialTechnicianId;
                 }
                 
-                // CAMBIO: Llenar estados para el país inicial
                 const savedCountry = localStorage.getItem('lastSelectedCountry') || 'USA';
                 countrySelect.value = savedCountry;
                 populateStates(savedCountry);
                 
-                // Initialize report listener con el técnico inicial
                 if (initialTechnicianId) {
                     setupReportListener(initialTechnicianId); 
                 }
@@ -961,65 +886,48 @@
             }
         }
         
-        /**
-         * Prepares the form for a new report, clearing fields and setting default values.
-         */
         function newReport() {
-            // CAMBIO: Resetear campos manualmente en lugar de usar form.reset()
             document.getElementById('clientName').value = '';
             document.getElementById('address').value = '';
             document.getElementById('city').value = '';
-            // CAMBIO: Resetear País y Estado
-            countrySelect.value = localStorage.getItem('lastSelectedCountry') || 'USA'; // Usar país guardado
-            populateStates(countrySelect.value); // Popula estados para ese país
-            stateSelect.value = ''; // Limpia la selección de estado
+            
+            countrySelect.value = localStorage.getItem('lastSelectedCountry') || 'USA'; 
+            populateStates(countrySelect.value); 
+            stateSelect.value = ''; 
             
             document.getElementById('zipCode').value = '';
             document.getElementById('issueDescription').value = '';
             document.getElementById('workPerformed').value = '';
-            document.getElementById('status').value = 'Completed'; // Default status
+            document.getElementById('status').value = 'Completed'; 
             
             const now = new Date();
-            // Set service date to today's date (format YYYY-MM-DD)
             serviceDateInput.value = formatDateLocal(now);
             
-            // Set default duration
             durationDaysInput.value = 0;
-            durationHoursInput.value = 8;
+            durationHoursInput.value = 1;
             
-            // CAMBIO: Cargar el último ID de técnico de localStorage
             const savedTechId = localStorage.getItem('lastSelectedTechnicianId');
             if (savedTechId && loadedTechnicians.some(t => t.id === savedTechId)) {
                 technicianNameSelect.value = savedTechId;
             } else if (loadedTechnicians.length > 0) {
-                technicianNameSelect.value = loadedTechnicians[0].id; // Default al primero
+                technicianNameSelect.value = loadedTechnicians[0].id; 
             }
             
             serviceTypeSelect.value = 'Paid service';
 
-            // CAMBIO: reportId se deja vacío. El ID se asignará al GUARDAR.
             reportIdInput.value = ''; 
             
-            // NUEVO: Limpiar el pad de firma
             if (signaturePadInstance) {
                 signaturePadInstance.clear();
             }
             
-            // Set button to 'Save Report' state
             saveButtonText.textContent = 'Save Report';
             saveIcon.setAttribute('data-lucide', 'save');
             
-            // Re-render Lucide icons
             lucide.createIcons();
             showMessage("New report started. Fill in details and save.", 'success');
-            
-            // CAMBIO: Ya no se llama a setupReportListener aquí,
-            // se llamará cuando initFirebase termine.
         }
 
-        /**
-         * Saves or updates the service report in Firestore.
-         */
         async function saveReport(e) {
             e.preventDefault();
 
@@ -1028,28 +936,25 @@
                 return;
             }
             
-            // CAMBIO: Lógica movida a la transacción si es un REPORTE NUEVO
             const currentReportId = reportIdInput.value;
-            const isNewReport = currentReportId === ''; // Un reporte nuevo ya no tiene ID aleatorio
+            const isNewReport = currentReportId === ''; 
             
-            // CAMBIO: Obtener ID y Nombre del técnico seleccionado
             const selectedTechId = technicianNameSelect.value;
             const selectedTechName = technicianNameSelect.options[technicianNameSelect.selectedIndex].text;
 
             const reportData = {
-                // reportId: se asignará en la transacción o en la actualización
                 clientName: document.getElementById('clientName').value,
                 serviceDate: document.getElementById('serviceDate').value,
                 issueDescription: document.getElementById('issueDescription').value,
                 workPerformed: document.getElementById('workPerformed').value,
                 status: document.getElementById('status').value,
                 
-                technicianId: selectedTechId, // CAMBIO: e.g., "T001"
-                technicianName: selectedTechName, // CAMBIO: e.g., "Ramon"
+                technicianId: selectedTechId, 
+                technicianName: selectedTechName, 
                 
                 serviceType: serviceTypeSelect.value, 
-                country: countrySelect.value, // NUEVO
-                state: stateSelect.value,     // NUEVO
+                country: countrySelect.value, 
+                state: stateSelect.value,     
                 address: addressInput.value,
                 city: cityInput.value,
                 zipCode: zipCodeInput.value,
@@ -1058,39 +963,30 @@
                 timestamp: serverTimestamp() 
             };
             
-            // NOTA: La firma no se guarda en Firestore, solo se usa para el PDF.
-
             if (isNewReport) {
-                // --- Lógica de transacción para NUEVOS reportes ---
                 try {
                     const newReportId = await runTransaction(db, async (transaction) => {
-                        // 1. Definir la referencia al contador
-                        // CAMBIO: El path debe ser seguro para las reglas
                         const counterRef = doc(db, "metadata/reportCounter"); 
                         const counterDoc = await transaction.get(counterRef);
 
-                        let newCount = 1; // Default si no existe
+                        let newCount = 1; 
                         if (counterDoc.exists()) {
                             newCount = counterDoc.data().currentCount + 1;
                         }
 
-                        // 2. Formatear el ID (ej: 1 -> SERVICE-000001)
                         const formattedId = "SERVICE-" + String(newCount).padStart(6, '0');
                         
-                        // 3. Actualizar el contador en la transacción
                         transaction.set(counterRef, { currentCount: newCount });
 
-                        // 4. Crear el nuevo reporte con el ID secuencial
-                        // CAMBIO: Path actualizado a la colección pública 'service_reports'
                         const reportRef = doc(db, `service_reports`, formattedId);
-                        reportData.reportId = formattedId; // Añadir el ID a los datos
+                        reportData.reportId = formattedId; 
                         transaction.set(reportRef, reportData);
                         
                         return formattedId;
                     });
 
                     showMessage(`Report ${newReportId} saved successfully!`, 'success');
-                    newReport(); // Resetear el formulario
+                    newReport(); 
 
                 } catch (error) {
                     console.error("Error in transaction:", error);
@@ -1098,12 +994,10 @@
                 }
             
             } else {
-                // --- Lógica de ACTUALIZACIÓN para reportes existentes ---
                 try {
-                    reportData.reportId = currentReportId; // Asegurarse de que el ID está en los datos
-                    // CAMBIO: Path actualizado a la colección pública 'service_reports'
+                    reportData.reportId = currentReportId; 
                     const reportRef = doc(db, `service_reports`, currentReportId);
-                    await setDoc(reportRef, reportData, { merge: true }); // Usar merge para actualizar
+                    await setDoc(reportRef, reportData, { merge: true }); 
                     showMessage('Report updated successfully!', 'success');
                 } catch (error) {
                     console.error("Error updating report:", error);
@@ -1112,38 +1006,27 @@
             }
         }
 
-        /**
-         * Listens for changes in the reports collection and updates the list.
-         * CAMBIO: La función ahora acepta 'technicianId' y maneja la anulación de suscripción.
-         */
         function setupReportListener(technicianId) {
-            
-            // CAMBIO: Añadir una verificación de que db exista antes de usarlo.
             if (!db) {
                 console.log("setupReportListener skipped: db is not ready.");
                 return; 
             }
 
-            // Si no hay técnico seleccionado (ej. "Select Technician"), mostrar mensaje.
             if (!technicianId) {
                 reportsList.innerHTML = '<p class="text-center text-gray-500 py-4">Select a technician to see reports.</p>';
                 return;
             }
 
-            // CAMBIO: Anular la suscripción del listener anterior si existe
             if (currentReportListener) {
                 currentReportListener();
             }
 
-            // CAMBIO: Path actualizado a la colección pública 'service_reports'
             const reportsColRef = collection(db, `service_reports`);
             
-            // CAMBIO: La consulta ahora filtra por 'technicianId' (String)
             const q = query(reportsColRef, 
                           where("technicianId", "==", technicianId), 
                           limit(10)); 
 
-            // CAMBIO: Guardar la nueva función de anulación de suscripción
             currentReportListener = onSnapshot(q, (snapshot) => {
                 const reports = [];
                 snapshot.forEach(doc => {
@@ -1151,15 +1034,13 @@
                     reports.push({ ...data, id: doc.id }); 
                 });
                 
-                // Sort client-side (in-memory) by serviceDate (descending)
                 reports.sort((a, b) => {
                     const dateA = new Date(a.serviceDate);
                     const dateB = new Date(b.serviceDate);
-                    if (isNaN(dateA) || isNaN(dateB)) return 0; // Skip if dates are invalid
+                    if (isNaN(dateA) || isNaN(dateB)) return 0; 
                     return dateB - dateA;
                 });
 
-                // CAMBIO: Pasar el ID del técnico al renderizador
                 renderReportList(reports, technicianId);
             }, (error) => {
                 console.error("Error listening for reports:", error);
@@ -1167,22 +1048,15 @@
             });
         }
 
-        /**
-         * Renders the list of reports in the DOM.
-         * CAMBIO: Acepta 'technicianId' para mostrar mensajes de "no hay reportes" más claros.
-         */
         function renderReportList(reports, technicianId) {
-            // CAMBIO: Buscar y ocultar el mensaje de carga ANTES de borrar el innerHTML.
             const loadingMsg = document.getElementById('loadingMessage');
             if (loadingMsg) {
                 loadingMsg.classList.add('hidden');
             }
             
-            reportsList.innerHTML = ''; // Esta línea borra el loadingMessage, por eso se movió arriba.
+            reportsList.innerHTML = ''; 
 
             if (reports.length === 0) {
-                // CAMBIO: Mensaje específico si no hay reportes para ese técnico
-                // Buscar el nombre del técnico en el array global
                 const techName = loadedTechnicians.find(t => t.id === technicianId)?.name || "the selected technician";
                 reportsList.innerHTML = `<p class="text-center text-gray-500 py-4">No reports found for ${techName}.</p>`;
                 return;
@@ -1193,14 +1067,10 @@
                                     report.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 
                                     'bg-red-100 text-red-800';
 
-                // Format date for list display
                 const date = formatReadableDate(report.serviceDate);
                 
-                // Construct full address for display
-                // CAMBIO: Usar state y country
                 const fullAddress = report.address ? `${report.address}, ${report.city || ''}, ${report.state || ''}` : `${report.city || ''}, ${report.state || ''}` || 'N/A';
                 
-                // Construct duration string for list display
                 const days = report.durationDays || 0;
                 const hours = report.durationHours || 0;
                 let durationString = `${days}D ${hours}H`;
@@ -1218,40 +1088,32 @@
                     <p class="text-xs text-gray-500">Date: ${date}</p>
                     <p class="text-xs text-gray-500">Duration: ${durationString}</p>
                     <p class="text-xs text-gray-500">Technician: ${report.technicianName || 'N/A'}</p>
-                    <p class="text-xs text-gray-500">Type: ${report.serviceType || 'N/A'}</p> <!-- NUEVO -->
+                    <p class="text-xs text-gray-500">Type: ${report.serviceType || 'N/A'}</p> 
                 `;
 
-                // Event to load the report into the form for editing
                 reportItem.addEventListener('click', () => editReport(report));
                 reportsList.appendChild(reportItem);
             });
-            lucide.createIcons(); // Re-render icons if any
+            lucide.createIcons(); 
         }
         
-        /**
-         * Loads the data of a selected report into the form for editing.
-         * @param {Object} report - The report object.
-         */
         function editReport(report) {
             reportIdInput.value = report.reportId;
             document.getElementById('clientName').value = report.clientName;
             serviceDateInput.value = report.serviceDate; 
             
-            // Populate new fields
-            // CAMBIO: Seleccionar basado en 'technicianId'
             technicianNameSelect.value = report.technicianId || ""; 
             if (technicianNameSelect.value === "") {
-                technicianNameSelect.selectedIndex = 0; // Placeholder
+                technicianNameSelect.selectedIndex = 0; 
             }
             
-            serviceTypeSelect.value = report.serviceType || 'Paid service'; // NUEVO
+            serviceTypeSelect.value = report.serviceType || 'Paid service'; 
             addressInput.value = report.address || '';
             cityInput.value = report.city || '';
             
-            // CAMBIO: Lógica para cargar País y Estado
-            countrySelect.value = report.country || 'USA'; // Cargar país, default a USA
-            populateStates(countrySelect.value); // Poblar la lista de estados para ese país
-            stateSelect.value = report.state || ''; // Seleccionar el estado guardado
+            countrySelect.value = report.country || 'USA'; 
+            populateStates(countrySelect.value); 
+            stateSelect.value = report.state || ''; 
             
             zipCodeInput.value = report.zipCode || '';
             durationDaysInput.value = report.durationDays || 0;
@@ -1261,30 +1123,22 @@
             document.getElementById('workPerformed').value = report.workPerformed;
             document.getElementById('status').value = report.status;
             
-            // NUEVO: Limpiar la firma al cargar un reporte antiguo
             if (signaturePadInstance) {
                 signaturePadInstance.clear();
             }
 
-            // Change button to 'Update Report' state
             saveButtonText.textContent = 'Update Report';
             saveIcon.setAttribute('data-lucide', 'edit-3');
 
-            // Scroll to the form
             window.scrollTo({ top: 0, behavior: 'smooth' });
             showMessage(`Editing report ${report.reportId} for ${report.clientName}`, 'success');
             lucide.createIcons();
 
-            // CAMBIO: Al editar, actualizar el listener para mostrar 
-            // los reportes del técnico que se está editando.
             if (technicianNameSelect.value) {
                 setupReportListener(technicianNameSelect.value);
             }
         }
         
-        /**
-         * NUEVO: Busca un reporte específico por su ID y lo carga.
-         */
         async function retrieveReportById() {
             const reportNumber = retrieveIdInput.value;
             if (!reportNumber) {
@@ -1296,21 +1150,18 @@
                 return;
             }
 
-            // Formatear el ID
             const fullReportId = "SERVICE-" + String(reportNumber).padStart(6, '0');
             
             showMessage(`Retrieving ${fullReportId}...`, 'success');
             
             try {
-                // CAMBIO: Path actualizado a la colección pública 'service_reports'
                 const reportRef = doc(db, `service_reports`, fullReportId);
                 const docSnap = await getDoc(reportRef);
 
                 if (docSnap.exists()) {
-                    // Cargar el reporte en el editor
                     editReport(docSnap.data());
                     showMessage(`Report ${fullReportId} loaded.`, 'success');
-                    retrieveIdInput.value = ''; // Limpiar el input
+                    retrieveIdInput.value = ''; 
                 } else {
                     showMessage(`Report ${fullReportId} not found.`, 'error');
                 }
@@ -1320,16 +1171,11 @@
             }
         }
 
-        /**
-         * NUEVO: Configura el lienzo de firma y el responsive.
-         */
         function setupSignaturePad() {
-            // Inicializar el pad
             signaturePadInstance = new SignaturePad(signaturePadCanvas, {
-                backgroundColor: 'rgb(255, 255, 255)' // Fondo blanco
+                backgroundColor: 'rgb(255, 255, 255)' 
             });
 
-            // Función para ajustar el tamaño del canvas (para responsive y DPI alto)
             function resizeCanvas() {
                 try {
                     const ratio =  Math.max(window.devicePixelRatio || 1, 1);
@@ -1337,18 +1183,15 @@
                     signaturePadCanvas.width = wrapper.offsetWidth * ratio;
                     signaturePadCanvas.height = wrapper.offsetHeight * ratio;
                     signaturePadCanvas.getContext("2d").scale(ratio, ratio);
-                    signaturePadInstance.clear(); // Limpiar al redimensionar
+                    signaturePadInstance.clear(); 
                 } catch (e) {
                     console.error("Error al redimensionar el canvas de firma:", e);
                 }
             }
 
-            // Redimensionar al cambiar el tamaño de la ventana
             window.addEventListener("resize", resizeCanvas);
-            // Redimensionar al inicio
             resizeCanvas();
 
-            // Asignar el botón de borrar
             clearSignatureButton.addEventListener('click', () => {
                 signaturePadInstance.clear();
             });
@@ -1357,69 +1200,53 @@
 
         // --- INITIALIZATION AND LISTENERS ---
         
-        /**
-         * Main setup function to run the application.
-         */
         function setupApp() {
             try {
-                // 1. Setup UI elements immediately
-                
-                // CAMBIO: Poblar estados para el país por defecto (USA)
                 console.log("setupApp: Populating states...");
                 const initialCountry = localStorage.getItem('lastSelectedCountry') || 'USA';
                 countrySelect.value = initialCountry;
                 populateStates(initialCountry);
 
-                // CAMBIO: newReport() se llamará después de cargar los técnicos
+                console.log("setupApp: Starting new report...");
+                // newReport() will be called after technicians are loaded in initFirebase
                 
                 console.log("setupApp: Creating icons...");
                 lucide.createIcons();
                 
-                // NUEVO: Configurar el pad de firma
                 console.log("setupApp: Setting up signature pad...");
                 setupSignaturePad();
                 
-                // 2. Attach static listeners
                 console.log("setupApp: Attaching listeners...");
                 form.addEventListener('submit', saveReport);
                 newReportButton.addEventListener('click', newReport);
                 exportPdfButton.addEventListener('click', exportToPDF);
                 
-                // NUEVO: Listener para el botón Retrieve
                 retrieveButton.addEventListener('click', retrieveReportById);
                 
-                // NUEVO: Listener para el cambio de técnico
-                // CAMBIO: Ahora guarda 'technicianId' en localStorage
                 technicianNameSelect.addEventListener('change', (e) => {
                     const selectedId = e.target.value;
                     if (selectedId) {
-                        // 1. Guardar la selección en localStorage
                         localStorage.setItem('lastSelectedTechnicianId', selectedId);
-                        // 2. Actualizar la lista de reportes
                         setupReportListener(selectedId);
                     }
                 });
                 
-                // NUEVO: Listener para el cambio de PAÍS
                 countrySelect.addEventListener('change', (e) => {
                     populateStates(e.target.value);
                     localStorage.setItem('lastSelectedCountry', e.target.value);
                 });
                 
-                // 3. Initialize Firebase asynchronously for data persistence
                 console.log("setupApp: Initializing Firebase...");
-                initFirebase(); // initFirebase ahora llama a newReport() después de cargar técnicos
+                initFirebase(); 
                 console.log("setupApp: Setup complete.");
             } catch (e) {
                 console.error("Error fatal en setupApp:", e);
-                // No usar alert(), usar showMessage si está disponible, o console.error
                 if (typeof showMessage === 'function') {
                     showMessage(`Error fatal en la aplicación: ${e.message}`, 'error');
                 }
             }
         }
 
-        // CAMBIO: Usar DOMContentLoaded en lugar de window.onload
         document.addEventListener('DOMContentLoaded', setupApp);
     </script>
 </body>
