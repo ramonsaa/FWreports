@@ -189,6 +189,7 @@
                                     <option value="USA">USA</option>
                                     <option value="Canada">Canada</option>
                                     <option value="Mexico">Mexico</option>
+                                    <option value="Trinidad & Tobago">Trinidad & Tobago</option>
                                 </select>
                             </div>
                             <div>
@@ -330,6 +331,12 @@
                 "Guerrero", "Hidalgo", "Jalisco", "México", "Michoacán", "Morelos", "Nayarit", "Nuevo León", "Oaxaca", "Puebla", 
                 "Querétaro", "Quintana Roo", "San Luis Potosí", "Sinaloa", "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz", "Yucatán", 
                 "Zacatecas", "Ciudad de México"
+            ],
+            "Trinidad & Tobago": [
+                "Arima", "Chaguanas", "Couva-Tabaquite-Talparo", "Diego Martin", 
+                "Mayaro-Rio Claro", "Penal-Debe", "Point Fortin", "Port of Spain", 
+                "Princes Town", "San Fernando", "San Juan-Laventille", "Sangre Grande", 
+                "Siparia", "Tunapuna-Piarco", "Tobago"
             ]
         };
 
@@ -503,6 +510,7 @@
             let countryValue = "USA"; 
             if (tech.defaultCountry === "M") countryValue = "Mexico";
             if (tech.defaultCountry === "C") countryValue = "Canada";
+            if (tech.defaultCountry === "T") countryValue = "Trinidad & Tobago";
 
             countrySelect.value = countryValue;
             localStorage.setItem('lastSelectedCountry', countryValue);
@@ -590,6 +598,7 @@
                 address: addressInput.value,
                 city: cityInput.value,
                 zipCode: zipCodeInput.value,
+                // CORRECCIÓN: Añadido || 0 para evitar NaN
                 durationDays: parseInt(durationDaysInput.value || 0),
                 durationHours: parseInt(durationHoursInput.value || 0),
                 timestamp: serverTimestamp() 
@@ -1228,11 +1237,7 @@
                 lucide.createIcons();
                 
                 console.log("setupApp: Setting up signature pad...");
-                if (typeof SignaturePad !== 'undefined' && signaturePadCanvas) {
-                    setupSignaturePad();
-                } else {
-                    console.warn("SignaturePad library not loaded or canvas missing.");
-                }
+                setupSignaturePad();
                 
                 console.log("setupApp: Attaching listeners...");
                 form.addEventListener('submit', saveReportWrapper);
@@ -1246,6 +1251,8 @@
                     if (selectedId) {
                         localStorage.setItem('lastSelectedTechnicianId', selectedId);
                         setupReportListener(selectedId);
+                        
+                        // CAMBIO: Actualizar país por default al cambiar técnico
                         updateCountryFromTechnician(selectedId);
                     }
                 });
@@ -1336,3 +1343,5 @@
     </script>
 </body>
 </html>
+
+
