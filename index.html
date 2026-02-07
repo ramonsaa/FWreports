@@ -598,7 +598,6 @@
                 address: addressInput.value,
                 city: cityInput.value,
                 zipCode: zipCodeInput.value,
-                // CORRECCIÓN: Añadido || 0 para evitar NaN
                 durationDays: parseInt(durationDaysInput.value || 0),
                 durationHours: parseInt(durationHoursInput.value || 0),
                 timestamp: serverTimestamp() 
@@ -865,6 +864,7 @@
                 y += 13; 
 
                 // --- Descripción de Problema ---
+                // MODIFICADO: Paginación Automática
                 doc.setDrawColor('#F97316'); 
                 doc.line(margin, y, margin, y + 10); 
                 doc.setFontSize(12);
@@ -876,11 +876,29 @@
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor('#1F2937');
+                
                 const issueLines = doc.splitTextToSize(reportData.issueDescription, contentWidth - 5);
-                doc.text(issueLines, margin + 5, y);
-                y += (issueLines.length * 5) + 5; // Padding reducido
+                
+                // Iterar sobre las líneas para manejar saltos de página
+                for (let i = 0; i < issueLines.length; i++) {
+                    if (y > pageHeight - 30) { // Si llegamos al final (menos margen footer)
+                        doc.addPage(); // Nueva página
+                        y = 20; // Resetear Y al inicio
+                    }
+                    doc.text(issueLines[i], margin + 5, y);
+                    y += 5; // Altura de línea
+                }
+                y += 5; // Padding extra al final del bloque
 
                 // --- Trabajo Realizado ---
+                // MODIFICADO: Paginación Automática
+                
+                // Verificar espacio para el título de la siguiente sección
+                if (y > pageHeight - 40) { 
+                    doc.addPage();
+                    y = 20;
+                }
+
                 doc.setDrawColor('#F97316'); 
                 doc.line(margin, y, margin, y + 10); 
                 doc.setFontSize(12);
@@ -892,9 +910,19 @@
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor('#1F2937');
+                
                 const workLines = doc.splitTextToSize(reportData.workPerformed, contentWidth - 5);
-                doc.text(workLines, margin + 5, y);
-                y += (workLines.length * 5) + 5; // Padding reducido
+                
+                // Iterar sobre las líneas para manejar saltos de página
+                for (let i = 0; i < workLines.length; i++) {
+                    if (y > pageHeight - 30) { // Si llegamos al final (menos margen footer)
+                        doc.addPage(); // Nueva página
+                        y = 20; // Resetear Y al inicio
+                    }
+                    doc.text(workLines[i], margin + 5, y);
+                    y += 5; // Altura de línea
+                }
+                y += 5; // Padding extra
 
                 // --- Firma Opcional ---
                 if (signaturePadInstance && !signaturePadInstance.isEmpty()) {
@@ -1148,8 +1176,8 @@
             document.getElementById('address').value = '';
             document.getElementById('city').value = '';
             
-            countrySelect.value = localStorage.getItem('lastSelectedCountry') || 'USA'; 
-            populateStates(countrySelect.value); 
+            // No resetear país, mantener el último seleccionado o el del técnico
+            // countrySelect.value = ... 
             stateSelect.value = ''; 
             
             document.getElementById('zipCode').value = '';
@@ -1237,7 +1265,11 @@
                 lucide.createIcons();
                 
                 console.log("setupApp: Setting up signature pad...");
-                setupSignaturePad();
+                if (typeof SignaturePad !== 'undefined' && signaturePadCanvas) {
+                    setupSignaturePad();
+                } else {
+                    console.warn("SignaturePad library not loaded or canvas missing.");
+                }
                 
                 console.log("setupApp: Attaching listeners...");
                 form.addEventListener('submit', saveReportWrapper);
@@ -1251,8 +1283,6 @@
                     if (selectedId) {
                         localStorage.setItem('lastSelectedTechnicianId', selectedId);
                         setupReportListener(selectedId);
-                        
-                        // CAMBIO: Actualizar país por default al cambiar técnico
                         updateCountryFromTechnician(selectedId);
                     }
                 });
@@ -1343,5 +1373,3 @@
     </script>
 </body>
 </html>
-
-
