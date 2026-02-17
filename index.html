@@ -160,6 +160,18 @@
                     </div>
                 </div>
 
+                <!-- NUEVO: Machine Type & Serial Number -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="machineType" class="block text-sm font-medium text-gray-700">Machine Type</label>
+                        <input type="text" id="machineType" required placeholder="Ex: FW 993 XL" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark">
+                    </div>
+                    <div>
+                        <label for="serialNumber" class="block text-sm font-medium text-gray-700">Serial Number</label>
+                        <input type="text" id="serialNumber" required placeholder="Ex: 123456" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark">
+                    </div>
+                </div>
+
                 <!-- Service Duration Fields -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Service Duration</label>
@@ -356,6 +368,10 @@
         
         const durationDaysInput = document.getElementById('durationDays');
         const durationHoursInput = document.getElementById('durationHours');
+        
+        // NUEVO: Referencias para Machine Details
+        const machineTypeInput = document.getElementById('machineType');
+        const serialNumberInput = document.getElementById('serialNumber');
 
         const addressInput = document.getElementById('address');
         const cityInput = document.getElementById('city');
@@ -592,6 +608,10 @@
                 technicianId: selectedTechId, 
                 technicianName: selectedTechName, 
                 
+                // NUEVO: Machine Info
+                machineType: machineTypeInput.value,
+                serialNumber: serialNumberInput.value,
+                
                 serviceType: serviceTypeSelect.value, 
                 country: countrySelect.value, 
                 state: stateSelect.value,     
@@ -673,7 +693,9 @@
                 cityInput.value,
                 countrySelect.value,
                 stateSelect.value,
-                zipCodeInput.value
+                zipCodeInput.value,
+                machineTypeInput.value, // NUEVO
+                serialNumberInput.value // NUEVO
             ];
 
             const allFieldsFilled = requiredFields.every(value => value && value.trim() !== '');
@@ -718,7 +740,9 @@
                 state: stateSelect.value,
                 zipCode: zipCodeInput.value,
                 durationDays: durationDaysInput.value,
-                durationHours: durationHoursInput.value
+                durationHours: durationHoursInput.value,
+                machineType: machineTypeInput.value, // NUEVO
+                serialNumber: serialNumberInput.value // NUEVO
             };
             
             const fileName = `${reportData.reportId}.pdf`;
@@ -770,16 +794,16 @@
                 y += 10;
 
                 // --- Caja de Cliente y Ubicación ---
-                // Altura reducida de 60 a 50 para compactar
+                // CAMBIO: Aumentar altura para nueva fila (50 -> 62)
                 doc.setFillColor('#E0E7FF'); 
-                doc.roundedRect(margin, y, contentWidth, 50, 3, 3, 'F'); 
+                doc.roundedRect(margin, y, contentWidth, 62, 3, 3, 'F'); 
                 
                 let box_y = y + 10;
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#1E3A8A');
                 doc.text('Client & Location Details', margin + 5, box_y);
-                box_y += 8; // Espaciado reducido
+                box_y += 8; 
                 
                 doc.setFontSize(9);
                 doc.setFont('helvetica', 'bold');
@@ -791,7 +815,19 @@
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.clientName, margin + 30, box_y);
                 doc.text(formatReadableDate(reportData.serviceDate), x_center + 30, box_y);
-                box_y += 7; // Espaciado reducido
+                box_y += 7; 
+                
+                // NUEVO: Fila de Machine Type y Serial Number
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor('#4B5563');
+                doc.text('Machine Type:', margin + 5, box_y);
+                doc.text('Serial No:', x_center, box_y);
+                
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor('#1F2937');
+                doc.text(reportData.machineType, margin + 30, box_y);
+                doc.text(reportData.serialNumber, x_center + 30, box_y);
+                box_y += 7; 
 
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#4B5563');
@@ -799,7 +835,7 @@
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.address, margin + 30, box_y);
-                box_y += 7; // Espaciado reducido
+                box_y += 7; 
                 
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#4B5563');
@@ -810,7 +846,7 @@
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.country, margin + 30, box_y);
                 doc.text(reportData.state, x_center + 30, box_y);
-                box_y += 7; // Espaciado reducido
+                box_y += 7; 
                 
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#4B5563');
@@ -821,7 +857,7 @@
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.city, margin + 30, box_y);
                 doc.text(reportData.zipCode, x_center + 30, box_y);
-                y += 55; // Incremento reducido (50 + 5)
+                y += 67; // Incremento (62 + 5 padding)
 
                 // --- Información de Servicio ---
                 doc.setLineWidth(1);
@@ -1118,6 +1154,10 @@
             zipCodeInput.value = report.zipCode || '';
             durationDaysInput.value = report.durationDays || 0;
             durationHoursInput.value = report.durationHours || 0;
+            
+            // NUEVO: Populate Machine Info
+            machineTypeInput.value = report.machineType || '';
+            serialNumberInput.value = report.serialNumber || '';
 
             document.getElementById('issueDescription').value = report.issueDescription;
             document.getElementById('workPerformed').value = report.workPerformed;
@@ -1184,6 +1224,10 @@
             document.getElementById('issueDescription').value = '';
             document.getElementById('workPerformed').value = '';
             document.getElementById('status').value = 'Completed'; 
+            
+            // NUEVO: Resetear Machine Info
+            machineTypeInput.value = '';
+            serialNumberInput.value = '';
             
             const now = new Date();
             serviceDateInput.value = formatDateLocal(now);
@@ -1265,6 +1309,7 @@
                 lucide.createIcons();
                 
                 console.log("setupApp: Setting up signature pad...");
+                // FIX: Asegurar que el elemento de firma exista y que la librería cargue
                 if (typeof SignaturePad !== 'undefined' && signaturePadCanvas) {
                     setupSignaturePad();
                 } else {
