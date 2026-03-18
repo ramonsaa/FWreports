@@ -369,7 +369,7 @@
         const durationDaysInput = document.getElementById('durationDays');
         const durationHoursInput = document.getElementById('durationHours');
         
-        // NUEVO: Referencias para Machine Details
+        // Referencias para Machine Details
         const machineTypeInput = document.getElementById('machineType');
         const serialNumberInput = document.getElementById('serialNumber');
 
@@ -608,7 +608,7 @@
                 technicianId: selectedTechId, 
                 technicianName: selectedTechName, 
                 
-                // NUEVO: Machine Info
+                // Machine Info
                 machineType: machineTypeInput.value,
                 serialNumber: serialNumberInput.value,
                 
@@ -694,8 +694,8 @@
                 countrySelect.value,
                 stateSelect.value,
                 zipCodeInput.value,
-                machineTypeInput.value, // NUEVO
-                serialNumberInput.value // NUEVO
+                machineTypeInput.value,
+                serialNumberInput.value 
             ];
 
             const allFieldsFilled = requiredFields.every(value => value && value.trim() !== '');
@@ -741,8 +741,8 @@
                 zipCode: zipCodeInput.value,
                 durationDays: durationDaysInput.value,
                 durationHours: durationHoursInput.value,
-                machineType: machineTypeInput.value, // NUEVO
-                serialNumber: serialNumberInput.value // NUEVO
+                machineType: machineTypeInput.value, 
+                serialNumber: serialNumberInput.value 
             };
             
             const fileName = `${reportData.reportId}.pdf`;
@@ -794,7 +794,6 @@
                 y += 10;
 
                 // --- Caja de Cliente y Ubicación ---
-                // CAMBIO: Aumentar altura para nueva fila (50 -> 62)
                 doc.setFillColor('#E0E7FF'); 
                 doc.roundedRect(margin, y, contentWidth, 62, 3, 3, 'F'); 
                 
@@ -817,7 +816,7 @@
                 doc.text(formatReadableDate(reportData.serviceDate), x_center + 30, box_y);
                 box_y += 7; 
                 
-                // NUEVO: Fila de Machine Type y Serial Number
+                // Fila de Machine Type y Serial Number
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#4B5563');
                 doc.text('Machine Type:', margin + 5, box_y);
@@ -900,7 +899,6 @@
                 y += 13; 
 
                 // --- Descripción de Problema ---
-                // MODIFICADO: Paginación Automática
                 doc.setDrawColor('#F97316'); 
                 doc.line(margin, y, margin, y + 10); 
                 doc.setFontSize(12);
@@ -927,7 +925,6 @@
                 y += 5; // Padding extra al final del bloque
 
                 // --- Trabajo Realizado ---
-                // MODIFICADO: Paginación Automática
                 
                 // Verificar espacio para el título de la siguiente sección
                 if (y > pageHeight - 40) { 
@@ -1013,19 +1010,16 @@
                 }
 
                 // GUARDAR LOCALMENTE (Método compatible con móviles)
-                // En lugar de doc.save(), creamos un blob y forzamos el clic
                 const blob = doc.output('blob');
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
                 link.download = fileName;
                 
-                // Fix para Firefox y móviles
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 
-                // Limpieza
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
                 
                 // SUBIR A FIREBASE STORAGE
@@ -1059,23 +1053,25 @@
 
             const reportsColRef = collection(db, `service_reports`);
             
-            const q = query(reportsColRef, 
-                          where("technicianId", "==", technicianId), 
-                          limit(10)); 
+            // CORRECCIÓN: Quitamos el limit(10) de Firebase para poder ordenar correctamente primero
+            const q = query(reportsColRef, where("technicianId", "==", technicianId)); 
 
             currentReportListener = onSnapshot(q, (snapshot) => {
-                const reports = [];
+                let reports = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     reports.push({ ...data, id: doc.id }); 
                 });
                 
+                // ORDENAR LOCALMENTE POR ID DESCENDENTE (Para asegurar que SERVICE-00025 > SERVICE-00024)
                 reports.sort((a, b) => {
-                    const dateA = new Date(a.serviceDate);
-                    const dateB = new Date(b.serviceDate);
-                    if (isNaN(dateA) || isNaN(dateB)) return 0; 
-                    return dateB - dateA;
+                    if (!a.reportId) return 1;
+                    if (!b.reportId) return -1;
+                    return b.reportId.localeCompare(a.reportId);
                 });
+                
+                // AHORA CORTAMOS A LOS ÚLTIMOS 10
+                reports = reports.slice(0, 10);
 
                 renderReportList(reports, technicianId);
             }, (error) => {
@@ -1155,7 +1151,7 @@
             durationDaysInput.value = report.durationDays || 0;
             durationHoursInput.value = report.durationHours || 0;
             
-            // NUEVO: Populate Machine Info
+            // Populate Machine Info
             machineTypeInput.value = report.machineType || '';
             serialNumberInput.value = report.serialNumber || '';
 
@@ -1225,7 +1221,7 @@
             document.getElementById('workPerformed').value = '';
             document.getElementById('status').value = 'Completed'; 
             
-            // NUEVO: Resetear Machine Info
+            // Resetear Machine Info
             machineTypeInput.value = '';
             serialNumberInput.value = '';
             
@@ -1309,7 +1305,6 @@
                 lucide.createIcons();
                 
                 console.log("setupApp: Setting up signature pad...");
-                // FIX: Asegurar que el elemento de firma exista y que la librería cargue
                 if (typeof SignaturePad !== 'undefined' && signaturePadCanvas) {
                     setupSignaturePad();
                 } else {
