@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -160,7 +161,7 @@
                     </div>
                 </div>
 
-                <!-- NUEVO: Machine Type & Serial Number -->
+                <!-- Machine Type & Serial Number -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="machineType" class="block text-sm font-medium text-gray-700">Machine Type</label>
@@ -303,13 +304,11 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, limit, serverTimestamp, setLogLevel, runTransaction, getDoc, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, limit, serverTimestamp, runTransaction, getDoc, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
         
         // --- GLOBAL CONSTANTS ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'flexowash-service-reports';
-        
         const firebaseConfig = {
             apiKey: "AIzaSyDkYxAPCDKgt4QcZ44Nz72ZWYBzSMtyJCU",
             authDomain: "fw-reports.firebaseapp.com",
@@ -319,9 +318,7 @@
             appId: "1:161658306989:web:e38a7964295b1bf6396124"
         };
         
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        
-        // Array global para almacenar los técnicos cargados de Firebase
+        // Array global para almacenar los técnicos
         let loadedTechnicians = [];
         
         // Listas de Estados/Provincias
@@ -362,26 +359,19 @@
         const reportIdInput = document.getElementById('reportId');
         const messageBox = document.getElementById('messageBox');
         const exportPdfButton = document.getElementById('exportPdfButton');
-        
         const saveButtonText = document.getElementById('saveButtonText');
         const saveIcon = document.getElementById('saveIcon');
-        
         const durationDaysInput = document.getElementById('durationDays');
         const durationHoursInput = document.getElementById('durationHours');
-        
-        // Referencias para Machine Details
         const machineTypeInput = document.getElementById('machineType');
         const serialNumberInput = document.getElementById('serialNumber');
-
         const addressInput = document.getElementById('address');
         const cityInput = document.getElementById('city');
         const countrySelect = document.getElementById('country');
         const stateSelect = document.getElementById('state');
         const zipCodeInput = document.getElementById('zipCode');
-        
         const retrieveIdInput = document.getElementById('retrieveIdInput');
         const retrieveButton = document.getElementById('retrieveButton');
-        
         const signaturePadCanvas = document.getElementById('signaturePad');
         const clearSignatureButton = document.getElementById('clearSignatureButton');
         
@@ -458,9 +448,12 @@
             });
         }
         
-        // Carga técnicos desde Firestore
+        // CORRECCIÓN DE RUTAS: Volvemos a las rutas raíz de tu propio Firebase
         async function loadAndPopulateTechnicians() {
             try {
+                if (!userId) return;
+
+                // Ruta correcta para tu Firebase
                 const techCol = collection(db, 'technicians');
                 const q = query(techCol, orderBy('techId')); 
                 const querySnapshot = await getDocs(q);
@@ -471,15 +464,22 @@
                     loadedTechnicians.push({
                         id: data.techId, 
                         name: data.name,
-                        defaultCountry: data.defaultCountry // Para futura referencia
+                        defaultCountry: data.defaultCountry 
                     });
                 });
+
+                if (loadedTechnicians.length === 0) {
+                    console.warn("No technicians found in database. Using defaults.");
+                    loadedTechnicians = [
+                        { id: "TEC001", name: "Demo Technician", defaultCountry: "USA" }
+                    ];
+                }
 
                 populateTechnicianDropdown();
 
             } catch (error) {
                 console.error("Error loading technicians:", error);
-                showMessage("Error loading technician list from DB.", 'error');
+                showMessage("Error loading technician list from DB: " + error.message, 'error');
                 technicianNameSelect.innerHTML = '<option value="" disabled>Error loading technicians</option>';
             }
         }
@@ -513,15 +513,11 @@
             }
         }
         
-        // Helper para actualizar el país basado en el técnico
         function updateCountryFromTechnician(techId) {
             if (!techId) return;
             const tech = loadedTechnicians.find(t => t.id === techId);
             
-            if (!tech || !tech.defaultCountry) {
-                // Si no hay defaultCountry, mantenemos el país actual o USA
-                return;
-            }
+            if (!tech || !tech.defaultCountry) return;
 
             let countryValue = "USA"; 
             if (tech.defaultCountry === "M") countryValue = "Mexico";
@@ -537,10 +533,7 @@
             const logoEl = document.getElementById('companyLogo');
             const logoUrl = logoEl.src;
 
-            if (logoUrl.includes('placehold.co')) {
-                 console.warn('PDF Export: Usando placeholder, el logo será omitido.');
-                 return null;
-            }
+            if (logoUrl.includes('placehold.co')) return null;
             
             try {
                 const response = await fetch(logoUrl, { mode: 'cors' });
@@ -558,35 +551,24 @@
             }
         }
 
-        /**
-         * Sube el archivo a Firebase Storage
-         */
         async function uploadToFirebaseStorage(pdfBlob, fileName) {
             if (!storage) {
                 console.error("Firebase Storage not initialized");
                 showMessage("Error: Cloud storage not available.", 'error');
                 return;
             }
-
             showMessage('Uploading to Firebase Storage...', 'success');
-            
             try {
-                // Referencia: carpeta 'pdf_reports' / nombre del archivo
                 const storageRef = ref(storage, `pdf_reports/${fileName}`);
-                
-                // Subir
-                const snapshot = await uploadBytes(storageRef, pdfBlob);
-                console.log('Uploaded a blob or file!', snapshot);
-                
+                await uploadBytes(storageRef, pdfBlob);
                 showMessage('PDF downloaded & uploaded to Cloud successfully!', 'success');
-
             } catch (error) {
                 console.error("Firebase Storage Error:", error);
                 showMessage(`Local save OK, but Cloud upload failed: ${error.message}`, 'error');
             }
         }
 
-        // --- GUARDAR EN BASE DE DATOS (REUSABLE) ---
+        // --- GUARDAR EN BASE DE DATOS ---
         async function performSave() {
             if (!db || !userId) {
                 throw new Error("Database persistence is currently disabled or failed to initialize.");
@@ -604,14 +586,10 @@
                 issueDescription: document.getElementById('issueDescription').value,
                 workPerformed: document.getElementById('workPerformed').value,
                 status: document.getElementById('status').value,
-                
                 technicianId: selectedTechId, 
                 technicianName: selectedTechName, 
-                
-                // Machine Info
                 machineType: machineTypeInput.value,
                 serialNumber: serialNumberInput.value,
-                
                 serviceType: serviceTypeSelect.value, 
                 country: countrySelect.value, 
                 state: stateSelect.value,     
@@ -624,9 +602,9 @@
             };
             
             if (isNewReport) {
-                // --- Lógica de transacción para NUEVOS reportes ---
                 const newReportId = await runTransaction(db, async (transaction) => {
-                    const counterRef = doc(db, "metadata/reportCounter"); 
+                    // Ruta correcta a tu metadata
+                    const counterRef = doc(db, 'metadata', 'reportCounter'); 
                     const counterDoc = await transaction.get(counterRef);
 
                     let newCount = 1; 
@@ -635,38 +613,31 @@
                     }
 
                     const formattedId = "SERVICE-" + String(newCount).padStart(6, '0');
-                    
                     transaction.set(counterRef, { currentCount: newCount });
 
-                    const reportRef = doc(db, `service_reports`, formattedId);
+                    // Ruta correcta a tus reportes
+                    const reportRef = doc(db, 'service_reports', formattedId);
                     reportData.reportId = formattedId; 
                     transaction.set(reportRef, reportData);
                     
                     return formattedId;
                 });
-                
                 return { id: newReportId, isNew: true };
-            
             } else {
-                // --- Lógica de ACTUALIZACIÓN ---
                 reportData.reportId = currentReportId; 
-                const reportRef = doc(db, `service_reports`, currentReportId);
+                // Ruta correcta a tus reportes
+                const reportRef = doc(db, 'service_reports', currentReportId);
                 await setDoc(reportRef, reportData, { merge: true }); 
-                
                 return { id: currentReportId, isNew: false };
             }
         }
 
-        // --- WRAPPER PARA GUARDAR ---
         async function saveReportWrapper(e) {
             e.preventDefault();
             try {
                 const result = await performSave();
-                
                 if (result.isNew) {
                     showMessage(`Report ${result.id} saved successfully!`, 'success');
-                    
-                    // ACTUALIZAR UI PARA MODO EDICIÓN
                     reportIdInput.value = result.id;
                     saveButtonText.textContent = 'Save Report'; 
                     saveIcon.setAttribute('data-lucide', 'edit-3'); 
@@ -680,7 +651,6 @@
         }
 
         // --- PDF EXPORT FUNCTIONALITY ---
-
         async function exportToPDF() {
             const requiredFields = [
                 document.getElementById('clientName').value,
@@ -705,18 +675,15 @@
                 return;
             }
             
-            // CAMBIO CLAVE: Autoguardar si no tiene ID
             let finalReportId = reportIdInput.value;
             if (!finalReportId) {
                 showMessage("Saving report first to generate ID...", 'success');
                 try {
                     const result = await performSave();
                     finalReportId = result.id;
-                    // Actualizar UI con el nuevo ID
                     reportIdInput.value = finalReportId;
-                    saveButtonText.textContent = 'Save Report'; // Ya guardado
-                    saveIcon.setAttribute('data-lucide', 'edit-3'); // Icono editar
-                    // No borramos el formulario
+                    saveButtonText.textContent = 'Save Report'; 
+                    saveIcon.setAttribute('data-lucide', 'edit-3'); 
                 } catch (error) {
                     console.error("Error auto-saving before export:", error);
                     showMessage(`Could not save report. PDF export aborted: ${error.message}`, 'error');
@@ -724,7 +691,6 @@
                 }
             }
             
-            // Ahora sí, generar el PDF con el ID correcto
             const reportData = {
                 reportId: finalReportId, 
                 clientName: document.getElementById('clientName').value,
@@ -746,7 +712,6 @@
             };
             
             const fileName = `${reportData.reportId}.pdf`;
-
             showMessage('Generating PDF...', 'success');
 
             try {
@@ -761,7 +726,6 @@
                 const x_center = pageWidth / 2;
                 let y = 20; 
 
-                // --- Encabezado ---
                 if (logoData) {
                     doc.addImage(logoData, 'PNG', margin, 15, 40, 10); 
                 }
@@ -775,7 +739,6 @@
                 doc.line(margin, y, pageWidth - margin, y); 
                 y += 10;
 
-                // --- ID de Reporte y Status ---
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#4B5563');
@@ -793,7 +756,6 @@
                 doc.text(reportData.status, pageWidth - margin, y, { align: 'right' });
                 y += 10;
 
-                // --- Caja de Cliente y Ubicación ---
                 doc.setFillColor('#E0E7FF'); 
                 doc.roundedRect(margin, y, contentWidth, 62, 3, 3, 'F'); 
                 
@@ -816,7 +778,6 @@
                 doc.text(formatReadableDate(reportData.serviceDate), x_center + 30, box_y);
                 box_y += 7; 
                 
-                // Fila de Machine Type y Serial Number
                 doc.setFont('helvetica', 'bold');
                 doc.setTextColor('#4B5563');
                 doc.text('Machine Type:', margin + 5, box_y);
@@ -856,9 +817,8 @@
                 doc.setTextColor('#1F2937');
                 doc.text(reportData.city, margin + 30, box_y);
                 doc.text(reportData.zipCode, x_center + 30, box_y);
-                y += 67; // Incremento (62 + 5 padding)
+                y += 67; 
 
-                // --- Información de Servicio ---
                 doc.setLineWidth(1);
                 doc.setDrawColor('#F97316'); 
                 doc.line(margin, y, margin, y + 25); 
@@ -898,7 +858,6 @@
                 
                 y += 13; 
 
-                // --- Descripción de Problema ---
                 doc.setDrawColor('#F97316'); 
                 doc.line(margin, y, margin, y + 10); 
                 doc.setFontSize(12);
@@ -912,21 +871,16 @@
                 doc.setTextColor('#1F2937');
                 
                 const issueLines = doc.splitTextToSize(reportData.issueDescription, contentWidth - 5);
-                
-                // Iterar sobre las líneas para manejar saltos de página
                 for (let i = 0; i < issueLines.length; i++) {
-                    if (y > pageHeight - 30) { // Si llegamos al final (menos margen footer)
-                        doc.addPage(); // Nueva página
-                        y = 20; // Resetear Y al inicio
+                    if (y > pageHeight - 30) {
+                        doc.addPage(); 
+                        y = 20; 
                     }
                     doc.text(issueLines[i], margin + 5, y);
-                    y += 5; // Altura de línea
+                    y += 5; 
                 }
-                y += 5; // Padding extra al final del bloque
+                y += 5; 
 
-                // --- Trabajo Realizado ---
-                
-                // Verificar espacio para el título de la siguiente sección
                 if (y > pageHeight - 40) { 
                     doc.addPage();
                     y = 20;
@@ -945,19 +899,16 @@
                 doc.setTextColor('#1F2937');
                 
                 const workLines = doc.splitTextToSize(reportData.workPerformed, contentWidth - 5);
-                
-                // Iterar sobre las líneas para manejar saltos de página
                 for (let i = 0; i < workLines.length; i++) {
-                    if (y > pageHeight - 30) { // Si llegamos al final (menos margen footer)
-                        doc.addPage(); // Nueva página
-                        y = 20; // Resetear Y al inicio
+                    if (y > pageHeight - 30) { 
+                        doc.addPage(); 
+                        y = 20; 
                     }
                     doc.text(workLines[i], margin + 5, y);
-                    y += 5; // Altura de línea
+                    y += 5; 
                 }
-                y += 5; // Padding extra
+                y += 5; 
 
-                // --- Firma Opcional ---
                 if (signaturePadInstance && !signaturePadInstance.isEmpty()) {
                     const footerHeight = 30;
                     let signatureHeight = 30; 
@@ -986,12 +937,9 @@
                     doc.addImage(signatureDataUrl, 'JPEG', signatureX + 1, signatureBoxY + 1, signatureWidth - 2, signatureHeight - 2);
                 } 
 
-
-                // --- Footer en todas las páginas ---
                 const pageCount = doc.internal.getNumberOfPages();
                 for(let i = 1; i <= pageCount; i++) {
                     doc.setPage(i); 
-                    
                     doc.setLineWidth(0.5);
                     doc.setDrawColor('#E5E7EB'); 
                     doc.line(margin, pageHeight - 20, pageWidth - margin, pageHeight - 20);
@@ -1009,7 +957,6 @@
                     doc.text('Contact us at: service@flexowashus.com', x_center, pageHeight - 10, { align: 'center' });
                 }
 
-                // GUARDAR LOCALMENTE (Método compatible con móviles)
                 const blob = doc.output('blob');
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
@@ -1021,13 +968,9 @@
                 document.body.removeChild(link);
                 
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
-                
-                // SUBIR A FIREBASE STORAGE
                 await uploadToFirebaseStorage(blob, fileName);
                 
-                if (signaturePadInstance) {
-                    signaturePadInstance.clear();
-                }
+                if (signaturePadInstance) signaturePadInstance.clear();
 
             } catch (error) {
                 console.error("PDF Export Error:", error);
@@ -1037,10 +980,7 @@
 
         // --- REPORT LIST FUNCTIONS ---
         function setupReportListener(technicianId) {
-            if (!db) {
-                console.log("setupReportListener skipped: db is not ready.");
-                return; 
-            }
+            if (!db || !userId) return; 
 
             if (!technicianId) {
                 reportsList.innerHTML = '<p class="text-center text-gray-500 py-4">Select a technician to see reports.</p>';
@@ -1051,9 +991,8 @@
                 currentReportListener();
             }
 
-            const reportsColRef = collection(db, `service_reports`);
-            
-            // CORRECCIÓN: Quitamos el limit(10) de Firebase para poder ordenar correctamente primero
+            // RUTA CORRECTA PARA TU FIREBASE
+            const reportsColRef = collection(db, 'service_reports');
             const q = query(reportsColRef, where("technicianId", "==", technicianId)); 
 
             currentReportListener = onSnapshot(q, (snapshot) => {
@@ -1063,28 +1002,23 @@
                     reports.push({ ...data, id: doc.id }); 
                 });
                 
-                // ORDENAR LOCALMENTE POR ID DESCENDENTE (Para asegurar que SERVICE-00025 > SERVICE-00024)
                 reports.sort((a, b) => {
                     if (!a.reportId) return 1;
                     if (!b.reportId) return -1;
                     return b.reportId.localeCompare(a.reportId);
                 });
                 
-                // AHORA CORTAMOS A LOS ÚLTIMOS 10
                 reports = reports.slice(0, 10);
-
                 renderReportList(reports, technicianId);
             }, (error) => {
                 console.error("Error listening for reports:", error);
-                showMessage("Error loading report list.", 'error');
+                showMessage("Error loading report list: " + error.message, 'error');
             });
         }
 
         function renderReportList(reports, technicianId) {
             const loadingMsg = document.getElementById('loadingMessage');
-            if (loadingMsg) {
-                loadingMsg.classList.add('hidden');
-            }
+            if (loadingMsg) loadingMsg.classList.add('hidden');
             
             reportsList.innerHTML = ''; 
 
@@ -1100,7 +1034,6 @@
                                     'bg-red-100 text-red-800';
 
                 const date = formatReadableDate(report.serviceDate);
-                
                 const fullAddress = report.address ? `${report.address}, ${report.city || ''}, ${report.state || ''}` : `${report.city || ''}, ${report.state || ''}` || 'N/A';
                 
                 const days = report.durationDays || 0;
@@ -1151,7 +1084,6 @@
             durationDaysInput.value = report.durationDays || 0;
             durationHoursInput.value = report.durationHours || 0;
             
-            // Populate Machine Info
             machineTypeInput.value = report.machineType || '';
             serialNumberInput.value = report.serialNumber || '';
 
@@ -1159,9 +1091,7 @@
             document.getElementById('workPerformed').value = report.workPerformed;
             document.getElementById('status').value = report.status;
             
-            if (signaturePadInstance) {
-                signaturePadInstance.clear();
-            }
+            if (signaturePadInstance) signaturePadInstance.clear();
 
             saveButtonText.textContent = 'Update Report';
             saveIcon.setAttribute('data-lucide', 'edit-3');
@@ -1187,11 +1117,11 @@
             }
 
             const fullReportId = "SERVICE-" + String(reportNumber).padStart(6, '0');
-            
             showMessage(`Retrieving ${fullReportId}...`, 'success');
             
             try {
-                const reportRef = doc(db, `service_reports`, fullReportId);
+                // RUTA CORRECTA A TU FIREBASE
+                const reportRef = doc(db, 'service_reports', fullReportId);
                 const docSnap = await getDoc(reportRef);
 
                 if (docSnap.exists()) {
@@ -1211,39 +1141,28 @@
             document.getElementById('clientName').value = '';
             document.getElementById('address').value = '';
             document.getElementById('city').value = '';
-            
-            // No resetear país, mantener el último seleccionado o el del técnico
-            // countrySelect.value = ... 
             stateSelect.value = ''; 
-            
             document.getElementById('zipCode').value = '';
             document.getElementById('issueDescription').value = '';
             document.getElementById('workPerformed').value = '';
             document.getElementById('status').value = 'Completed'; 
-            
-            // Resetear Machine Info
             machineTypeInput.value = '';
             serialNumberInput.value = '';
             
             const now = new Date();
             serviceDateInput.value = formatDateLocal(now);
-            
             durationDaysInput.value = 0;
             durationHoursInput.value = 1;
             
-            // Mantener técnico seleccionado si existe
             const currentTechId = technicianNameSelect.value;
             if (!currentTechId && loadedTechnicians.length > 0) {
                  technicianNameSelect.value = loadedTechnicians[0].id;
             }
             
             serviceTypeSelect.value = 'Paid service';
-
             reportIdInput.value = ''; 
             
-            if (signaturePadInstance) {
-                signaturePadInstance.clear();
-            }
+            if (signaturePadInstance) signaturePadInstance.clear();
             
             saveButtonText.textContent = 'Save Report';
             saveIcon.setAttribute('data-lucide', 'save');
@@ -1253,20 +1172,14 @@
         }
 
         // --- INITIALIZATION AND LISTENERS ---
-        
         function setupSignaturePad() {
             const canvas = document.getElementById('signaturePad');
             const wrapper = document.getElementById('signaturePadWrapper');
             const clearBtn = document.getElementById('clearSignatureButton');
 
-            if (!canvas || !wrapper || typeof SignaturePad === 'undefined') {
-                console.warn("SignaturePad setup aborted: missing elements or library.");
-                return;
-            }
+            if (!canvas || !wrapper || typeof SignaturePad === 'undefined') return;
 
-            signaturePadInstance = new SignaturePad(canvas, {
-                backgroundColor: 'rgb(255, 255, 255)' 
-            });
+            signaturePadInstance = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
 
             function resizeCanvas() {
                 try {
@@ -1274,10 +1187,9 @@
                     canvas.width = wrapper.offsetWidth * ratio;
                     canvas.height = wrapper.offsetHeight * ratio;
                     canvas.getContext("2d").scale(ratio, ratio);
-                    
                     if (signaturePadInstance) signaturePadInstance.clear();
                 } catch (e) {
-                    console.error("Error al redimensionar el canvas de firma:", e);
+                    console.error("Error resizing canvas:", e);
                 }
             }
 
@@ -1293,29 +1205,19 @@
 
         function setupApp() {
             try {
-                console.log("setupApp: Populating states...");
                 const initialCountry = localStorage.getItem('lastSelectedCountry') || 'USA';
                 countrySelect.value = initialCountry;
                 populateStates(initialCountry);
 
-                console.log("setupApp: Starting new report...");
-                // newReport() will be called after technicians are loaded in initFirebase
-                
-                console.log("setupApp: Creating icons...");
                 lucide.createIcons();
                 
-                console.log("setupApp: Setting up signature pad...");
                 if (typeof SignaturePad !== 'undefined' && signaturePadCanvas) {
                     setupSignaturePad();
-                } else {
-                    console.warn("SignaturePad library not loaded or canvas missing.");
                 }
                 
-                console.log("setupApp: Attaching listeners...");
                 form.addEventListener('submit', saveReportWrapper);
                 newReportButton.addEventListener('click', newReport);
                 exportPdfButton.addEventListener('click', exportToPDF);
-                
                 retrieveButton.addEventListener('click', retrieveReportById);
                 
                 technicianNameSelect.addEventListener('change', (e) => {
@@ -1332,14 +1234,9 @@
                     localStorage.setItem('lastSelectedCountry', e.target.value);
                 });
                 
-                console.log("setupApp: Initializing Firebase...");
                 initFirebase(); 
-                console.log("setupApp: Setup complete.");
             } catch (e) {
-                console.error("Error fatal en setupApp:", e);
-                if (typeof showMessage === 'function') {
-                    showMessage(`Error fatal en la aplicación: ${e.message}`, 'error');
-                }
+                console.error("Fatal error setupApp:", e);
             }
         }
 
@@ -1351,61 +1248,46 @@
                 auth = getAuth(app);
                 storage = getStorage(app);
 
-                await new Promise((resolve) => {
-                    onAuthStateChanged(auth, async (user) => {
-                        if (user) {
-                            userId = user.uid;
-                        } else {
-                            await signInAnonymously(auth);
+                // Inicio de sesión anónimo (Asegurado que espera a Firebase)
+                await signInAnonymously(auth);
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("Firebase initialized and user authenticated:", userId);
+                        
+                        await loadAndPopulateTechnicians();
+                        
+                        const savedTechnicianId = localStorage.getItem('lastSelectedTechnicianId');
+                        let initialTechnicianId = null;
+
+                        if (savedTechnicianId && loadedTechnicians.some(t => t.id === savedTechnicianId)) {
+                            initialTechnicianId = savedTechnicianId;
+                            technicianNameSelect.value = savedTechnicianId;
+                        } else if (loadedTechnicians.length > 0) {
+                            initialTechnicianId = loadedTechnicians[0].id; 
+                            technicianNameSelect.value = initialTechnicianId;
                         }
-                        resolve();
-                    });
+                        
+                        if (initialTechnicianId) {
+                            setupReportListener(initialTechnicianId);
+                            updateCountryFromTechnician(initialTechnicianId);
+                        }
+                        
+                        newReport();
+                    } else {
+                        userId = null;
+                    }
                 });
-
-                userId = auth.currentUser?.uid || crypto.randomUUID();
-                
-                await loadAndPopulateTechnicians();
-                
-                // Configurar técnico inicial
-                const savedTechnicianId = localStorage.getItem('lastSelectedTechnicianId');
-                let initialTechnicianId = null;
-
-                if (savedTechnicianId && loadedTechnicians.some(t => t.id === savedTechnicianId)) {
-                    initialTechnicianId = savedTechnicianId;
-                    technicianNameSelect.value = savedTechnicianId;
-                } else if (loadedTechnicians.length > 0) {
-                    initialTechnicianId = loadedTechnicians[0].id; 
-                    technicianNameSelect.value = initialTechnicianId;
-                }
-                
-                // Configurar país inicial
-                const savedCountry = localStorage.getItem('lastSelectedCountry') || 'USA';
-                countrySelect.value = savedCountry;
-                populateStates(savedCountry);
-                
-                // Actualizar listener si hay técnico
-                if (initialTechnicianId) {
-                    setupReportListener(initialTechnicianId);
-                    // Actualizar país basado en el técnico (si tiene default)
-                    updateCountryFromTechnician(initialTechnicianId);
-                }
-                
-                // IMPORTANTE: Llamar a newReport para inicializar el formulario correctamente
-                newReport();
-                
-                console.log("Firebase initialized and user authenticated:", userId);
 
             } catch (error) {
                 console.error("Error in initFirebase:", error);
-                
-                if (error.code === 'auth/configuration-not-found') {
-                    const friendlyError = "Error: Authentication (Sign-in) is not enabled in your Firebase project.";
-                    showMessage(friendlyError, 'error');
-                    document.getElementById('loadingMessage').textContent = friendlyError;
-                } else {
-                    showMessage(`Initialization error: ${error.message}`, 'error');
-                    document.getElementById('loadingMessage').textContent = `Error: ${error.message}`;
-                }
+                const errorMsg = error.code === 'auth/operation-not-allowed' 
+                    ? "Error: Anonymous Sign-in is disabled in Firebase Console." 
+                    : `DB Error: ${error.message}`;
+                showMessage(errorMsg, 'error');
+                document.getElementById('loadingMessage').textContent = errorMsg;
+                alert(errorMsg); // Alerta forzada para que lo notes
             }
         }
 
@@ -1413,3 +1295,6 @@
     </script>
 </body>
 </html>
+
+
+```
