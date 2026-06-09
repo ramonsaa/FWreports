@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flexo Wash Service Report</title>
+    <title>Huella Global Service Report</title>
     
     <!-- Carga de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -107,7 +107,8 @@
         <!-- Header Responsivo -->
         <header class="bg-white shadow-lg p-4 rounded-xl mb-6 flex flex-col space-y-4 md:flex-row md:justify-between md:items-center md:space-y-0">
             <h1 class="text-3xl font-bold text-gray-800 flex items-center space-x-2">
-                <img src="https://www.flexowash.com/hs-fs/hubfs/FW%20logo%20original_100px.png?width=330&height=83&name=FW%20logo%20original_100px.png" alt="Flexo Wash Logo" class="h-9" id="companyLogo" crossOrigin="anonymous"> 
+                <!-- LOGO HUELLA GLOBAL (Dropbox link modificado para embeber imagen cruda) -->
+                <img src="https://dl.dropboxusercontent.com/scl/fi/chudcbfl772jm753tu6xn/logos-huella-global-Corregido-01.png?rlkey=3t7jj2i64o94pl8i2feypax5u&st=njiho5xm" alt="Huella Global Logo" class="h-9" id="companyLogo" crossOrigin="anonymous"> 
                 <span class="text-brand-blue-dark">Service Report</span>
             </h1>
             <button id="newReportButton" class="w-full justify-center px-4 py-2 bg-brand-orange text-white font-semibold rounded-lg shadow-md hover:bg-brand-orange-hover transition duration-150 flex items-center md:w-auto">
@@ -165,7 +166,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="machineType" class="block text-sm font-medium text-gray-700">Machine Type</label>
-                        <input type="text" id="machineType" required placeholder="Ex: FW 993 XL" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark">
+                        <input type="text" id="machineType" required placeholder="Ex: HG-200" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2 border focus:ring-brand-blue-dark focus:border-brand-blue-dark">
                     </div>
                     <div>
                         <label for="serialNumber" class="block text-sm font-medium text-gray-700">Serial Number</label>
@@ -448,12 +449,11 @@
             });
         }
         
-        // CORRECCIÓN DE RUTAS: Volvemos a las rutas raíz de tu propio Firebase
+        // Carga técnicos desde Firestore
         async function loadAndPopulateTechnicians() {
             try {
                 if (!userId) return;
 
-                // Ruta correcta para tu Firebase
                 const techCol = collection(db, 'technicians');
                 const q = query(techCol, orderBy('techId')); 
                 const querySnapshot = await getDocs(q);
@@ -603,7 +603,6 @@
             
             if (isNewReport) {
                 const newReportId = await runTransaction(db, async (transaction) => {
-                    // Ruta correcta a tu metadata
                     const counterRef = doc(db, 'metadata', 'reportCounter'); 
                     const counterDoc = await transaction.get(counterRef);
 
@@ -615,7 +614,6 @@
                     const formattedId = "SERVICE-" + String(newCount).padStart(6, '0');
                     transaction.set(counterRef, { currentCount: newCount });
 
-                    // Ruta correcta a tus reportes
                     const reportRef = doc(db, 'service_reports', formattedId);
                     reportData.reportId = formattedId; 
                     transaction.set(reportRef, reportData);
@@ -625,7 +623,6 @@
                 return { id: newReportId, isNew: true };
             } else {
                 reportData.reportId = currentReportId; 
-                // Ruta correcta a tus reportes
                 const reportRef = doc(db, 'service_reports', currentReportId);
                 await setDoc(reportRef, reportData, { merge: true }); 
                 return { id: currentReportId, isNew: false };
@@ -954,7 +951,7 @@
                     doc.text(footerTextCenter, x_center, pageHeight - 15, { align: 'center' });
                     doc.text(footerTextRight, pageWidth - margin, pageHeight - 15, { align: 'right' });
                     
-                    doc.text('Contact us at: service@flexowashus.com', x_center, pageHeight - 10, { align: 'center' });
+                    doc.text('Contact us at: contacto@huellaglobal.com', x_center, pageHeight - 10, { align: 'center' });
                 }
 
                 const blob = doc.output('blob');
@@ -991,7 +988,6 @@
                 currentReportListener();
             }
 
-            // RUTA CORRECTA PARA TU FIREBASE
             const reportsColRef = collection(db, 'service_reports');
             const q = query(reportsColRef, where("technicianId", "==", technicianId)); 
 
@@ -1120,7 +1116,6 @@
             showMessage(`Retrieving ${fullReportId}...`, 'success');
             
             try {
-                // RUTA CORRECTA A TU FIREBASE
                 const reportRef = doc(db, 'service_reports', fullReportId);
                 const docSnap = await getDoc(reportRef);
 
@@ -1248,7 +1243,6 @@
                 auth = getAuth(app);
                 storage = getStorage(app);
 
-                // Inicio de sesión anónimo (Asegurado que espera a Firebase)
                 await signInAnonymously(auth);
 
                 onAuthStateChanged(auth, async (user) => {
@@ -1287,7 +1281,7 @@
                     : `DB Error: ${error.message}`;
                 showMessage(errorMsg, 'error');
                 document.getElementById('loadingMessage').textContent = errorMsg;
-                alert(errorMsg); // Alerta forzada para que lo notes
+                alert(errorMsg); 
             }
         }
 
